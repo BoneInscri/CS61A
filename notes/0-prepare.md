@@ -34,15 +34,3 @@ SICP python 版本
 
 
 
-
-
-https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/index.html
-
-SICP Scheme 版本
-
-vscode 配置：
-
-https://blog.csdn.net/qq1097759441/article/details/129171686
-
-
-
