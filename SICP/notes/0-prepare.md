@@ -32,3 +32,10 @@ ctrl + alt + n  vscode 运行程序
 manual？
 
 http://www.lispmachine.net/books/LISP_1.5_Programmers_Manual.pdf
+
+
+
+exercise-answer
+
+http://community.schemewiki.org/?sicp-solutions
+
