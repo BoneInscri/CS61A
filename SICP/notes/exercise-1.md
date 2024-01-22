@@ -648,3 +648,170 @@ $$
 
 
 
+
+
+#### **Exercise 1.11.** 
+
+A function *f* is defined by the rule that *f*(*n*) = *n* if *n*<3 and *f*(*n*) = *f*(*n* - 1) + 2*f*(*n* - 2) + 3*f*(*n* - 3) if *n*> 3. 
+
+Write a procedure that computes *f* by means of a recursive process. 
+
+Write a procedure that computes *f* by means of an iterative process.
+
+写两个过程，一个是递归的，一个是迭代的。
+
+``` 
+f(0) = 0
+f(1) = 1
+f(2) = 2
+f(3) = 2 + 2 * 1 + 3 * 0 = 4
+f(4) = 4 + 2 * 2 + 3 * 1 = 11
+...
+```
+
+
+
+#### **Exercise 1.12.** 
+
+The following pattern of numbers is called *Pascal's triangle*.
+
+下面的数字模式被称为帕斯卡三角形。
+
+![image-20240122175352529](exercise-1.assets/image-20240122175352529.png)
+
+The numbers at the edge of the triangle are all 1, and each number inside the triangle is the sum of the two numbers above it.
+
+Write a procedure that computes elements of Pascal's triangle by means of a recursive process.
+
+三角形边缘的数字都是1，三角形内的每个数字都是上面两个数字的和。
+
+写一个程序，用递归的方法计算帕斯卡三角形的元素。
+
+```
+assert(i>=j)
+assert(i>=1)
+assert(j>=1)
+
+def f:
+    if j == 1:
+        return 1
+    else if i == j:
+        return 1
+    else
+        return f(i-1, j-1) + f(i-1, j)
+```
+
+代码中没有检查参数是否合法，但是上面的伪代码有限制。
+
+下标从1开始。
+
+
+
+#### **Exercise 1.13.** 
+
+Prove that *F**i**b*(*n*) is the closest integer to
+
+![image-20240122180827054](exercise-1.assets/image-20240122180827054.png)
+
+ Hint: Let
+
+![image-20240122180848140](exercise-1.assets/image-20240122180848140.png)
+
+Use induction and the definition of the Fibonacci numbers
+
+ to prove that
+
+![image-20240122180908175](exercise-1.assets/image-20240122180908175.png)
+
+![image-20240122180938217](exercise-1.assets/image-20240122180938217.png)
+
+
+
+https://sicp-solutions.net/post/sicp-solution-exercise-1-13/#solution
+
+ 
+
+首先需要证明
+
+![image-20240122182045471](exercise-1.assets/image-20240122182045471.png)
+
+加设成立，代入方程，然后化简，看最后是否得到一个恒等式：
+
+![image-20240122182124860](exercise-1.assets/image-20240122182124860.png)
+
+![image-20240122182145784](exercise-1.assets/image-20240122182145784.png)
+
+去掉根号5
+
+![image-20240122182204861](exercise-1.assets/image-20240122182204861.png)
+
+配凑，使其指数都是n
+
+![image-20240122182239366](exercise-1.assets/image-20240122182239366.png)
+
+提取括号
+
+![image-20240122182249471](exercise-1.assets/image-20240122182249471.png)
+
+时用两个变量的定义代入
+
+![image-20240122182341867](exercise-1.assets/image-20240122182341867.png)
+
+![image-20240122182348157](exercise-1.assets/image-20240122182348157.png)
+
+整理一下分母
+
+![image-20240122182432104](exercise-1.assets/image-20240122182432104.png)
+
+通分，准备做加法
+
+![image-20240122182500437](exercise-1.assets/image-20240122182500437.png)
+
+分式进行加法
+
+![image-20240122182513900](exercise-1.assets/image-20240122182513900.png)
+
+整理一下分子
+
+![image-20240122182549374](exercise-1.assets/image-20240122182549374.png)
+
+合并
+
+![image-20240122182605348](exercise-1.assets/image-20240122182605348.png)
+
+整理，发现是恒等式
+
+![image-20240122182624395](exercise-1.assets/image-20240122182624395.png)
+
+
+
+然后就是证明
+
+![image-20240122182059727](exercise-1.assets/image-20240122182059727.png)
+
+
+
+观察变量，得到变量的范围：
+
+![image-20240122182716996](exercise-1.assets/image-20240122182716996.png)
+
+![image-20240122182757945](exercise-1.assets/image-20240122182757945.png)
+
+对Fib(n) 进行分解
+
+![image-20240122182938447](exercise-1.assets/image-20240122182938447.png)
+
+重写，对Fib(n) 确定大小区间：
+
+![image-20240122182958319](exercise-1.assets/image-20240122182958319.png)
+
+![image-20240122183009451](exercise-1.assets/image-20240122183009451.png)
+
+![image-20240122183024253](exercise-1.assets/image-20240122183024253.png)
+
+![image-20240122183053953](exercise-1.assets/image-20240122183053953.png)
+
+![image-20240122183239048](exercise-1.assets/image-20240122183239048.png)
+
+
+
