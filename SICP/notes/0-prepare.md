@@ -39,3 +39,20 @@ exercise-answer
 
 http://community.schemewiki.org/?sicp-solutions
 
+
+
+racket 快捷键
+
+Ctrl+E             显示/隐藏交互窗口
+
+Ctrl+D             显示/隐藏代码窗口
+
+Ctrl+I               全文调整缩进
+
+Ctrl+Shift+V    粘贴时自动缩进
+
+Ctrl+T             新建标签
+
+Ctrl+W            关闭当前窗口（或标签）
+
+Ctrl+R或F5     运行
