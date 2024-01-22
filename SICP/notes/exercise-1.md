@@ -999,3 +999,150 @@ a / 0.1 得到一个数，然后这个数不断除以 3，直到为1，总共除
 
 显然是对数复杂度
 
+
+
+#### **Exercise 1.16.** 
+
+Design a procedure that evolves an **iterative exponentiation process** that uses successive squaring and uses a **logarithmic number of steps, as does `fast-expt`.** 
+
+(Hint: Using the observation that$(b^{n/2})^2=(b^2)^{n/2},$ **keep along with the exponent *n* and the base *b***, an additional state variable *a*, and define the state transformation in such a way that the product *a* $b^{n}$ is unchanged from state to state. 
+
+**At the beginning of the process *a* is taken to be 1**, and the answer is given by the value of *a* at the end of the process. In general, the technique of defining an *invariant quantity* that remains unchanged from state to state is a powerful way to think about the design of iterative algorithms.)
+
+大致就是用迭代的方法写快速幂。
+
+
+
+counter > 0，无论counter 为奇数还是偶数，最后一定会来到count = 1的阶段，然后product就被 b 更新了
+
+```lisp
+(define (fast-expt b n)
+    (define (expt-iter b counter product)
+      (cond ((= counter 0) product)
+            ((even? counter) (expt-iter (* b b) (/ counter 2) product) )
+            (else (expt-iter b (- counter 1) (* product b)))
+      )) 
+    (expt-iter b n 1))
+```
+
+
+
+
+
+#### **Exercise 1.17.** 
+
+The exponentiation algorithms in this section are based on performing exponentiation by means of repeated multiplication. In a similar way, one can perform integer multiplication by means of repeated addition. The following multiplication procedure (in which it is assumed that our language can only add, not multiply) is analogous to the `expt` procedure:
+
+本节中的求幂算法基于通过重复乘法来执行求幂。
+
+同样，可以通过重复加法来进行整数乘法。
+
+下面的乘法过程(假设我们的语言只能加，不能乘)类似于' expt '过程:
+
+```lisp
+(define (* a b)
+  (if (= b 0)
+      0
+      (+ a (* a (- b 1)))))
+```
+
+This algorithm takes a number of steps that is linear in `b`. 
+
+Now suppose we include, together with addition, operations `double`, which doubles an integer, and `halve`, which divides an (even) integer by 2. 
+
+Using these, design a multiplication procedure analogous to `fast-expt` that uses a logarithmic number of steps.
+
+这个算法的步骤在b中是线性的。
+
+现在假设我们在加法运算中包括了“double”操作，它将一个整数加倍，以及“half”操作，它将一个(偶数)整数除以2。
+
+使用这些，设计一个类似于“快速幂”的乘法过程，**使用对数级复杂度的过程**。
+
+
+
+#### **Exercise 1.18.** 
+
+Using the results of exercises 1.16 and 1.17, devise a procedure that generates an iterative process for multiplying two integers **in terms of adding, doubling, and halving and uses a logarithmic number of steps.**
+
+"Russian peasant method'' of multiplication
+
+
+
+#### **Exercise 1.19.**  
+
+There is a clever algorithm for computing the Fibonacci numbers in a logarithmic number of steps. 
+
+有一种聪明的算法可以以对数的步骤计算斐波那契数
+
+Recall the transformation of the state variables *a* and *b* in the `fib-iter` process of section  1.2.2 $a\longleftarrow a+b\mathrm{~and~}b\longleftarrow a.$
+
+Call this transformation *T*, and observe that applying *T* over and over again *n* times, starting with 1 and 0, produces the pair Fib(*n* + 1) and Fib(n). 
+
+In other words, the Fibonacci numbers are produced by applying $T^n$, the n th power of the transformation *T*, starting with the pair (1,0). 
+
+Now consider *T* to be the special case of *p* = 0 and *q* = 1 in a family of transformations $T_{pq}$, where $T_{pq}$ transforms the pair (*a*,*b*) according to $a\leftarrow bq+aq+ap$ and $b\leftarrow bp+aq$
+
+Show that if we apply such a transformation $T_{pq}$ twice, the effect is the same as using a single transformation $T_{p'q'}$ of the same form, and compute *p*' and *q*' in terms of *p* and *q*. 
+
+This gives us an explicit way to square these transformations, and thus we can compute $T^n$ using successive squaring, as in the `fast-expt` procedure. 
+
+Put this all together to complete the following procedure, which runs in a logarithmic number of steps:
+
+```lisp
+(define (fib n)
+  (fib-iter 1 0 0 1 n))
+(define (fib-iter a b p q count)
+  (cond ((= count 0) b)
+        ((even? count)
+         (fib-iter a
+                   b
+                   <??>      ; compute p'
+                   <??>      ; compute q'
+                   (/ count 2)))
+        (else (fib-iter (+ (* b q) (* a q) (* a p))
+                        (+ (* b p) (* a q))
+                        p
+                        q
+                        (- count 1)))))
+```
+
+迭代一次：
+$$
+a' = bq + aq + ap = a (p + q) + b q\\
+b' = aq + bp
+$$
+再迭代一次：
+$$
+a'' = a'*(p+q) + b'*q\\
+=(ap+aq+bq)(p+q)+(aq+bp)q\\
+=(ap^2+apq+apq+aq^2+bpq+bq^2)+aq^2+bpq\\
+=a*(p^2+2q^2+2pq)+b*(q^2+2pq)
+$$
+
+$$
+b'' = a'q + b'p 
+\\= (bp + aq) p + (bq + aq + ap) q
+\\= b p^2 + apq + bq^2 + aq^2 + apq
+\\= b p^ 2 + a q^2 + 2 apq
+\\= a*(2pq + q^2) + b * (p^2+q^2)
+$$
+观察一下：
+
+a 对应的p q迭代变化如下，
+$$
+p\rightarrow p^2+q^2\\
+q\rightarrow q^2+2pq
+$$
+b 对应的p q迭代变化如下，
+$$
+p\rightarrow p^2 + q^2\\
+q\rightarrow q^2+2pq
+$$
+居然用对数复杂度计算Fib，太妙了！！！
+
+
+
+
+
+
+
