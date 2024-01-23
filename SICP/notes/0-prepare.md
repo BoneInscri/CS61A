@@ -39,6 +39,22 @@ exercise-answer
 
 http://community.schemewiki.org/?sicp-solutions
 
+https://sicp-solutions.net/
+
+
+
+记得安装 sicp 的package
+
+https://zhuanlan.zhihu.com/p/37056659
+
+https://github.com/sicp-lang/sicp
+
+
+
+files-viewer
+
+https://github.com/MatrixForChange/files-viewer
+
 
 
 racket 快捷键
