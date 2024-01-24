@@ -1603,9 +1603,198 @@ b. the product of all the positive integers less than *n* **that are relatively 
 
 
 
+#### **Exercise 1.34.** 
+
+Suppose we define the procedure
+
+```lisp
+(define (f g)
+  (g 2))
+```
+
+Then we have
+
+```lisp
+(f square)
+; 4
+(f (lambda (z) (* z (+ z 1))))
+; 6
+```
+
+What happens if we (perversely) ask the interpreter to evaluate the combination (f f)? 
+
+Explain.
+
+<img src="exercise-1.assets/image-20240124091317341.png" alt="image-20240124091317341" style="zoom: 80%;" />
 
 
 
+f 是一个过程，它的参数是一个过程。
+
+但是：
+
+```
+(f f)
+->
+(f 2)
+```
+
+这里传给f的是一个数，肯定不对
+
+
+
+#### **Exercise 1.35.** 
+
+Show that the golden ratio $\phi $ (section 1.2.2) is a fixed point of the transformation $ x\mapsto1+1/x,$, and use this fact to compute by $\phi$ means of the `fixed-point` procedure.
+
+证明黄金分割$\phi$(第1.2.2节)是变换$ x\mapsto1+1/x，$的不动点，并利用这一事实通过$\phi$计算“不动点”过程的均值。
+$$
+\phi=(1+\sqrt5)/2\approx1.6180\\
+\phi^{2}=\phi+1
+$$
+
+
+
+#### **Exercise 1.36.** 
+
+Modify `fixed-point` so that it prints the sequence of approximations it generates, using the `newline` and `display` primitives shown in exercise 1.22. 
+
+Then find a solution to $x^x = 1000$ by finding a fixed point of  $x\mapsto\log(1000)/\log(x).$
+
+然后通过找到$x\mapsto\log(1000)/\log(x)$的一个不动点，找到 $x^x = 1000$的解
+
+(Use Scheme's primitive `log` procedure, which computes natural logarithms.) 
+
+Compare the number of steps this takes with and without average damping. 
+
+**(Note that you cannot start `fixed-point` with a guess of 1,** 
+
+**as this would cause division by `log`(1) = 0.)**
+
+
+
+比较**有平均阻尼和无平均阻尼**的效果，平均阻尼是否对不动点的收敛有加速作用？
+
+的确加快了
+
+无阻尼，需要迭代34步，有阻尼，需要迭代9步。
+
+
+
+#### **Exercise 1.37.** 
+
+a. An infinite *continued fraction* is an expression of the form
+
+下面是一个无限的连续分式。
+$$
+f=\frac{N_{1}}{D_{1}+\frac{N_{2}}{D_{2}+\frac{N_{3}}{D_{3}+\cdots}}}
+$$
+As an example, one can show that the infinite continued fraction expansion with the $N_i$ and the $D_i$ all equal to 1 produces  $\frac{1}{\phi}$ , where $\phi$ is the golden ratio (described in section 1.2.2). 
+
+作为一个例子，可以证明无限连分式展开，$N_i$和$D_i$都等于1，得到$\frac{1}{\phi}$，其中$\phi$是黄金比例(在1.2.2节中描述)。
+
+One way to approximate an infinite continued fraction is to truncate the expansion after a given number of terms. 
+
+是在给定的项数之后截断展开。
+
+Such a truncation - **a so-called k-term finite continued fraction** -- has the form
+
+一个所谓的k项有限连续分数
+$$
+\frac{N_1}{D_1+\frac{N_2}{\ddots+\frac{N_K}{D_K}}}
+$$
+Suppose that n and d are procedures of one argument (the term index $i)$ that return the $N_i$ and $D_i$ of the terms of the continued fraction. 
+
+Define a procedure cont- frac such that evaluating (cont-frac n d k) computes the value of the k-term finite continued fraction. 
+
+定义一个过程cont-frac，使计算(cont-frac n d k)计算k项有限连分数的值。
+
+Check your procedure by approximating $1/\phi$ using
+
+```lisp
+(cont-frac (lambda (i) 1.0)
+           (lambda (i) 1.0)
+           k)
+```
+
+for successive values of `k`. 
+
+How large must you make `k` in order to get an approximation that is accurate to 4 decimal places?
+
+对于连续的k值。k要多大才能得到精确到小数点后4位的近似值?
+
+
+
+b. If your `cont-frac` procedure generates a recursive process, write one that generates an iterative process. 
+
+If it generates an iterative process, write one that generates a recursive process.
+
+迭代和递归的版本都需要写。
+
+
+
+#### **Exercise 1.38.** 
+
+In 1737, the Swiss mathematician Leonhard Euler published a memoir $De$ Fractionibus Continuis, which included a continued fraction expansion for $e$ - 2, where $e$ is the base of the natural logarithms. 
+
+1737年，瑞士数学家莱昂哈德·欧拉(Leonhard Euler)出版了一本回忆录《连续分数》(De Fractionibus Continuis)，其中包括$ e - 2$ ，其中$e$是自然对数的底数。
+
+自然对数 e 的值约等于2.71828
+
+In this fraction, the $N_i$ are all 1, and the $D_i$ are successively $1,2,1,1,4,1,1,6,1,1,8,\ldots$ Write a program that uses your cont-frac procedure from exercise 1.37 to approximate e, based on Euler's expansion.
+
+在这个分数中，$N_i$都是1，$D_i$依次是$ 1,2,1,1,4,1,1,6,1,1,8,...$
+
+编写一个程序，使用练习1.37中的控制过程来基于欧拉展开近似e。
+
+- 1 2 1
+- 1 4 1
+- 1 6 1
+- 1 8 1 
+- ...
+
+2 5 8 11 
+
+2 +  3 * (k-1) = 3*k -1
+
+m = 3 * k -1 ?
+
+判定？
+
+**( m + 1 ) % 3 == 0**
+
+返回值？
+
+2 * ( (m + 1) / 3 )
+
+
+
+
+
+#### **Exercise 1.39.** 
+
+A continued fraction representation of the tangent function was published in 1770 by the German mathematician J.H. Lambert:
+
+1770年，德国数学家**兰伯特(J.H. Lambert)**发表了正切函数的连分式表示:
+$$
+\tan x=\frac{x}{1-\frac{x^2}{3-\frac{x^2}{5-\ddots}}}
+$$
+where *x* is in radians. 
+
+Define a procedure **`(tan-cf x k)`** that computes an approximation to the tangent function based on Lambert's formula. 
+
+`K` specifies the number of terms to compute, as in exercise 1.37.
+
+其中*x*代表弧度。
+
+定义一个过程' (tan-cf x k) '，根据**兰伯特公式**计算正切函数的近似值。
+
+' K '指定要计算的项数，如练习1.37所示。
+
+
+
+- 这里分母变成了减法
+- D 和 N都在发生变化
 
 
 
