@@ -1798,3 +1798,200 @@ Define a procedure **`(tan-cf x k)`** that computes an approximation to the tang
 
 
 
+#### **Exercise 1.40.** 
+
+Define a procedure `cubic` that can be used together with the `newtons-method` procedure in expressions of the form
+
+```lisp
+(newtons-method (cubic a b c) 1)
+```
+
+to approximate zeros of the cubic $x^3+ax^2+bx+c$.
+
+
+
+#### **Exercise 1.41.** 
+
+Define a procedure `double` that takes **a procedure of one argument as argument** and returns a procedure that **applies the original procedure twice**. 
+
+For example, if `inc` is a procedure that adds 1 to its argument, then `(double inc)` should be a procedure that adds 2. 
+
+**如果' inc '是一个将参数加1的过程，**
+
+**那么' (double inc) '应该是一个将参数加2的过程。**
+
+What value is returned by
+
+```lisp
+(((double (double double)) inc) 5)
+```
+
+结果是21
+
+```
+((double f) x)→ (f (f x))
+(((double double) f) x) → ((double (double f)) x)
+((double (double double)) f) → 
+(double (double (double (double f))))
+```
+
+double 1次 ，+2
+
+double 2次 ，+4
+
+double 1次 ，+8
+
+double 2次 ，+16
+
+所以答案就是 21
+
+
+
+#### **Exercise 1.42.** 
+
+Let *f* and *g* be **two one-argument functions.** 
+
+The *composition* *f* after *g* is defined to be the function $x\mapsto f(g(x)).$
+
+Define a procedure `compose` that implements composition. 
+
+For example, if `inc` is a procedure that adds 1 to its argument,
+
+```lisp
+((compose square inc) 6)
+; 49
+```
+
+```lisp
+(define (compose f g)
+  (lambda (x) (f (g x)))
+  )
+```
+
+
+
+#### **Exercise 1.43.** 
+
+If *f* is a **numerical function** and *n* is a **positive integer,** then we can form **the *n*th repeated application of *f*,** which is defined to be the function whose value at *x* is *f*(*f*(`...`(*f*(*x*))`...`)). 
+
+就是给一个函数f，给一个apply的次数n，那么这个复合函数就是函数f复合n次。
+
+For example, if *f* is the function *x* ![img](https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/full-text/book/book-Z-G-D-17.gif) *x* + 1, then the *n*th repeated application of *f* is the function *x* ![img](https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/full-text/book/book-Z-G-D-17.gif) *x* + *n*. 
+
+If *f* is the operation of squaring a number, then the ***n*th repeated** application of *f* is the function that raises its argument to the **$2^nth$ power.** 
+
+**Write a procedure that takes as inputs a procedure that computes *f* and a positive integer *n* and returns the procedure that computes the *n*th repeated application of *f*.** 
+
+Your procedure should be able to be used as follows:
+
+```lisp
+((repeated square 2) 5)
+; 625
+```
+
+**Hint: You may find it convenient to use `compose` from exercise 1.42.**
+
+```lisp
+(define (compose f g)
+  (lambda (x) (f (g x)))
+  )
+
+(define (repeated f n)
+  (define (iter g count)
+    (if (= count 0)
+        g
+        (iter (compose f g) (- count 1))
+        )
+    )
+  (iter f (- n 1)))
+```
+
+
+
+#### **Exercise 1.44.** 
+
+The idea of *smoothing* a function is an important concept in signal processing. 
+
+**平滑函数**的思想是**信号处理**中的一个重要概念。
+
+If *f* is a function and **$dx$ is some small number**, then the smoothed version of *f* is the function whose value at a point *x* is the average of $f(x - dx), f(x), and\, f(x + dx)$. 
+
+函数在某点x处的平滑函数就是 $f(x-dx)、f(x)和f(x+dx)$ 这者的平均值
+
+Write a procedure `smooth` that takes as input a procedure that computes *f* and returns a procedure that computes **the smoothed *f*.** 
+
+It is sometimes valuable to repeatedly smooth a function (that is, smooth the smoothed function, and so on) to obtained the $n-fold$ smoothed function. 
+
+有时，为了得到$n-fold$光滑的函数，反复平滑一个函数(即对光滑的函数进行平滑，等等)是有价值的。
+
+Show how to generate the ***n*-fold smoothed function** of any given function using `smooth` and **`repeated`** from exercise 1.43.
+
+
+
+（1）写出平滑1次的过程
+
+（2）写出平滑n次的过程
+
+
+
+#### **Exercise 1.45.** 
+
+We saw in section 1.3.3 that attempting to compute square roots by naively finding a fixed point of $y\mapsto x/y$ does not converge, and that **this can be fixed by average damping.** 
+
+找到不动点可以用平均阻尼来加速收敛。
+
+The same method works for finding cube roots as fixed points of the average-damped $y\mapsto x/y^2.$ 
+
+Unfortunately, the process does not work for fourth roots-- **a single average damp is not enough to make a fixed-point search for $y\mapsto x/y^3$ converge.** 
+
+平方根和立方根都是成立的，但是四次方根不能收敛。
+
+On the other hand, if we average damp twice (i.e., **use the average damp of the average damp of $y\mapsto x/y^3)$** the fixed-point search does converge. 
+
+但是，使用两次平均阻尼是可以收敛的！
+
+Do some experiments to determine **how many average damps are required to compute $n$th roots as a fixed-point search based upon repeated average damping of $y\mapsto x/y^{n-1}.$** 
+
+现在我们需要求解 n 次方根，请找到需要多少次平均阻尼才能让其不动点收敛。
+
+Use this to implement a simple procedure for computing $n$th roots using fixed- point, average-damp, and the repeated procedure of exercise 1.43.
+
+Assume that any arithmetic operations you need are available as primitives.
+
+
+
+将运算符放到前面，就可以**让变量名中含有 `-`，短横成为可能。**
+
+需要多少次平均阻尼和具体的x有关，没有看出特别明显的规律
+
+但基本就是随着 n 越来越大，次数越来越大
+
+
+
+#### **Exercise 1.46.** 
+
+Several of the numerical methods described in this chapter are instances of an extremely general computational strategy known as *iterative improvement*. 
+
+不动点、牛顿法基本都是一种“迭代改进”的计算策略。
+
+Iterative improvement says that, to compute something, we start with an initial guess for the answer, test if the guess is good enough, and otherwise improve the guess and continue the process using the improved guess as the new guess. 
+
+我们从对答案的初始猜测开始，**测试猜测是否足够好，**
+
+否则改进猜测并使用改进的猜测**作为新的猜测继续这个过程**
+
+Write a procedure `iterative-improve` that takes two procedures as arguments: 
+
+- a **method** for telling whether a guess is good enough 
+- a **method** for improving a guess.
+
+ `Iterative-improve` **should return as its value a procedure that takes a guess as argument and keeps improving the guess until it is good enough**. 
+
+Rewrite the `sqrt` procedure of section 1.1.7 and the `fixed-point` procedure of section 1.3.3 in terms of `iterative-improve`.
+
+**使用这个抽象的过程 iterative-improve 来重写 sqrt 和 fixed-point 。**
+
+
+
+主要的问题是如何返回一个递归函数？
+
