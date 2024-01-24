@@ -1442,9 +1442,9 @@ That is, write a procedure that takes an integer *n* and tests whether $a^n$ is 
 
 Carmichael numbers are **composite numbers that satisfy the same condition as prime numbers in Fermat's little theorem**
 
-
-
 这些数字都不是素数，但是费马测试却认为它们是素数。
+
+
 
 
 
@@ -1473,4 +1473,139 @@ Modify the `expmod` procedure to signal if it discovers a nontrivial square root
 Check your procedure by testing various known primes and non-primes. 
 
 **Hint: One convenient way to make `expmod` signal is to have it return 0.**
+
+这个检验可判定Carmichael numbers不是素数！
+
+
+
+#### **Exercise 1.29.** 
+
+Simpson's Rule is a more accurate method of numerical integration than the method illustrated above. Using Simpson's Rule, the integral of a function *f* between *a* and *b* is approximated as
+
+辛普森法则计算积分，精度更高。
+$$
+\frac{h}{3}[y_{0}+4y_{1}+2y_{2}+4y_{3}+2y_{4}+\cdots+2y_{n-2}+4y_{n-1}+y_{n}]
+$$
+where ***h* = (*b* - *a*)/*n***, for some even integer *n*, and $y_k = f(a+ kh)$. (**Increasing *n* increases the accuracy of the approximation**.) 
+$$
+\frac{1}{3}\frac{b-a}{n}[y_{0}+y_{n}+4y_{1}+4y_{3}+4y_{n-1}+2y_{2}+2y_{4}+\cdots+2y_{n-2}]
+$$
+Define a procedure that takes as arguments *f*, *a*, *b*, and *n* and returns the value of the integral, **computed using Simpson's Rule.** 
+
+Use your procedure to **integrate `cube` between 0 and 1 (with *n* = 100 and *n* = 1000)**, and compare the results to those of the `integral` procedure shown above.
+
+
+
+
+
+#### **Exercise 1.30.** 
+
+The `sum` procedure above generates a linear recursion. 
+
+The procedure can be rewritten so that the sum is performed iteratively. 
+
+Show how to do this by filling in the missing expressions in the following definition:
+
+```lisp
+(define (sum term a next b)
+  (define (iter a result)
+    (if <??>
+        <??>
+        (iter <??> <??>)))
+  (iter <??> <??>))
+```
+
+将线性递归改成线性迭代！
+
+```lisp
+(define (sum-i term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (+ (term a) result))))
+  (iter a 0))
+```
+
+
+
+#### **Exercise 1.31.** 
+
+a. The `sum` procedure is **only the simplest of a vast number of similar abstractions** that can be captured as higher-order procedures.
+
+还可以进一步抽象！
+
+Write an analogous procedure called `product` that returns the product of the values of a function at points over a given range. 
+
+**Show how to define `factorial` in terms of `product`.** 
+
+Also use `product` to compute approximations to $\pi$ using the formula.
+$$
+\frac{\pi}{4}=\frac{2\cdot4\cdot4\cdot6\cdot6\cdot8\cdot\cdots}{3\cdot3\cdot5\cdot5\cdot7\cdot7\cdot\cdots}
+$$
+这个公式是17世纪英国数学家**约翰·沃利斯**发现的。
+
+b. If your `product` procedure generates a recursive process, write one that generates an iterative process. 
+
+If it generates an **iterative process**, **write one that generates a recursive process**.
+
+这个练习题需要写两个版本，一个是递归的，一个是迭代的。
+
+
+
+DrRacket可以修改分数为 小数形式
+
+![image-20240124073046217](exercise-1.assets/image-20240124073046217.png)
+
+
+
+#### **Exercise 1.32.** 
+
+a. Show that `sum` and `product` (exercise 1.31) are both special cases of a still more general notion **called `accumulate`** that combines a collection of terms, using some general accumulation function:
+
+```lisp
+(accumulate combiner null-value term a next b)
+```
+
+sum 和 prodcut 的抽象都是 accumulate，所以可以进一步抽象。
+
+- 主要就是 combiner 可以是加、也可以是减
+- null-value 是基准值，可以是0，也可以是1
+
+`Accumulate` takes as arguments the same term and range specifications as `sum` and `product`, together with a `combiner` procedure (of two arguments) that specifies how the current term is to be combined with the accumulation of the preceding terms and a `null-value` that specifies what base value to use when the terms run out. Write `accumulate` and show how `sum` and `product` can both be defined as simple calls to `accumulate`.
+
+b. If your `accumulate` procedure generates a recursive process, write one that generates an iterative process. If it generates an iterative process, write one that generates a recursive process.
+
+递归版本和迭代版本都需要实现！
+
+
+
+#### **Exercise 1.33.** 
+
+You can obtain an even more general version of `accumulate` (exercise 1.32) by introducing the notion of a *filter* on the terms to be combined. 
+
+**更加通用的accumulate ？即 filter，不仅可以过滤，还可以在过滤的同时对这些数据进行“派生”！**
+
+That is, combine only those terms **derived from values** in the range **that satisfy a specified condition**. 
+
+d也就是说，只组合从满足指定条件的范围内的值派生的那些项。
+
+The resulting `filtered-accumulate` abstraction takes the same **arguments** as accumulate, **together with an additional predicate of one argument that specifies the filter**. 
+
+Write `filtered-accumulate` as a procedure. Show how to express the following using `filtered-accumulate`:
+
+a. the sum of the squares of the prime numbers in the interval *a* to *b* (assuming that you have a `prime?` predicate already written)
+
+得到 a 到 b 区间内的所有素数的**平方和**
+
+b. the product of all the positive integers less than *n* **that are relatively prime to *n*** (i.e., all positive integers ***i* < *n* such that GCD (i,n) = 1**).
+
+小于 n ，大于 0，且和 n 互质的所有数的**乘积**
+
+
+
+
+
+
+
+
 
