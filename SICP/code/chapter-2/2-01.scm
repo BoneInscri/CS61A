@@ -8,8 +8,8 @@
   (define s
     (if (or (and (> 0 n) (> 0 d)) (and (< 0 n) (< 0 d))) 1 -1))
   (let ((g (gcd n d)))
-      (cons (* s (/ n g)) (abs (/ d g))))
-)
+    (cons (* s (abs (/ n g))) (abs (/ d g))))
+  )
 
 (define (numer x) (car x))
 (define (denom x) (cdr x))
@@ -41,6 +41,8 @@
 (define x (make-rat 1 2))
 (define y (make-rat 1 -2))
 (define z (make-rat -2 -6))
+(define m (make-rat -1 2))
 (print-rat x)
 (print-rat y)
 (print-rat z)
+(print-rat m)
