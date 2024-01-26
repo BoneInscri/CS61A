@@ -257,5 +257,317 @@ Define `one` and `two` **directly** (not in terms of `zero` and `add-1`).
 
 
 
+#### **Exercise 2.7.** 
+
+Alyssa's program is incomplete because she has not specified the implementation of the interval abstraction. 
+
+Here is a definition of the interval constructor:
+
+```lisp
+(define (make-interval a b) (cons a b))
+```
+
+Define selectors `upper-bound` and `lower-bound` to complete the implementation.
+
+需要实现 区间计算的定义。
 
 
+
+#### Exercise 2.8. 
+
+Using reasoning analogous to Alyssa's, describe how the difference of two intervals may be computed. 
+
+Define a corresponding subtraction procedure,  called **sub-interval.**
+
+编写 sub-interval 这个过程。
+
+（1）左端点：最小减最大
+
+（2）右端点：最大减最小
+
+
+
+#### **Exercise 2.9.** 
+
+The *width* of an interval is **half of the difference between its upper and lower bounds**. 
+
+区间的宽度是它的上下界之差的一半。
+
+The width is a measure of the uncertainty of the number specified by the interval. 
+
+宽度是对区间所指定的数字的**不确定性的度量**。
+
+For some arithmetic operations the width of the result of combining two intervals is a function only of the widths of the argument intervals, whereas for others the width of the combination is not a function of the widths of the argument intervals. 
+
+运算结果的区间宽度 width **不一定是 参数区间宽度的函数。**
+
+Show that the width of the sum (or difference) of two intervals is a function only of the widths of the intervals being added (or subtracted). 
+
+**加法和减法**的结果区间宽度是参数区间参数的函数
+
+Give examples to show that this is not true for **multiplication or division.**
+
+加法和减法可以直接证明？
+
+乘法和除法可以举例，可以找出不成立的例子。
+
+```
+[0, 10] * [0, 2] = [0, 20]
+// 5 * 5 =? 10
+[-5, 5] * [-1, 1] = [-5, 5]
+// 5 * 1 =? 5
+```
+
+主要原因可以是乘法和除法都有min 和 max 的运算，非线性？
+
+```
+加法：
+
+I1 -> (l1 u1)
+I2 -> (l2 u2)
+w1 = (u1 - l1) / 2
+w2 = (u2 - l2) / 2 
+I1 + I2 = I3 
+I3 -> (l3 u3)
+w3 = (u3 - l3) / 2
+u3 = u1 + u2
+l3 = l1 + l2
+w3 = (u1 + u2 - l1 - l2) / 2 = w1 + w2
+
+减法:
+
+I1 - I2 = I4
+I4 -> (l4 u4)
+l4 = l1 - u2
+u4 = u1 - l2
+w4 = (u4 - l4) / 2 = (u1 - l2 - l1 + u2) / 2 = w1 + w2
+```
+
+加法和减法是一样的。
+
+
+
+#### **Exercise 2.10.** 
+
+Ben Bitdiddle, an expert systems programmer, looks over Alyssa's shoulder and comments that it is not clear what it means to divide **by an interval** that **spans zero**. 
+
+Modify Alyssa's code to check for this condition and to signal an error if it occurs.
+
+除以一个跨度为零的区间是什么意思？
+
+修改，如果发现跨度为0作为“除区间”，那么报错。
+
+加一个assert 就可以了。
+
+
+
+#### Exercise 2.11.   
+
+In passing, Ben also cryptically comments: 
+
+"By testing the signs of the endpoints of the intervals, it is possible to break **mul-interval** into **nine cases**, **only one of which requires more than two multiplications**. '' 
+
+Rewrite this procedure using Ben's suggestion.
+
+通过**测试区间端点的符号**，可以将**区间乘法**分解为九种情况，**其中只有一种需要两次以上的乘法**
+
+```
+[l1 u1]
+[l2 u2]
+-> 
+[L, U]
+保证有 u1 > l1, u2 > l2
+区间1有三种情况
+(1) l1 >= 0, u1 > 0
+(2) l1 < 0, u1 <= 0
+(3) l1 < 0, u1 > 0
+区间2有三种情况
+(1) l2 >= 0, u2 > 0
+(2) l2 < 0, u2 <= 0
+(3) l2 < 0, u2 > 0
+我们已经考虑了 0，那么就是 [-, -]、[+, +] 和 [-,+] 3种 
+总共有 3 * 3 = 9 种情况
+```
+
+```lisp
+; patt |  min  |  max 
+
+; 最大乘以最大，就是最大。
+; 最小乘以最小，就是最小。
+; ++++ | al bl | ah bh
+; ---- | ah bh | al bl
+
+; 负区间的最小乘以正区间的最大，就是最小（负的越多）
+; 负区间的最大乘以正区间的最小，就是最大（负得越少）
+; ++-- | ah bl | al bh
+; --++ | al bh | ah bl
+
+; 最小就是最小的负数乘以最大的正数，
+; 最大就是最大的负数乘以最小的负数。(负数乘以负数)
+; ---+ | al bh | al bl 
+; -+-- | ah bl | al bl 
+; 最大就是最大的正数乘以最大的正数。(正数乘以正数)
+; -+++ | al bh | ah bh 
+; ++-+ | ah bl | ah bh
+
+; -+-+ | trouble case
+```
+
+
+
+#### **Exercise 2.12.** 
+
+Define a constructor `make-center-percent` that takes a **center** and a percentage **tolerance** and produces the desired **interval**. 
+
+You must also define a selector `percent` that produces the percentage tolerance for a given **interval**. The `center` selector is the same as the one shown above.
+
+```
+center * tolerance -> upper-bound = center + center * tolerance 
+center * tolerance -> lower-bound = center - center * tolerance
+```
+
+
+
+#### **Exercise 2.13.** 
+
+Show that under the assumption of **small percentage tolerances** there is a simple formula for the **approximate percentage tolerance** of **the product of two intervals** in terms of the tolerances of the factors. 
+
+You may simplify the problem by assuming that all **numbers are positive.**
+
+```
+a -> [Ca Ta]
+[Ca - Ca * Ta, Ca + Ca * Ta]
+b -> [Cb Tb]
+[Cb - Cb * Tb, Cb + Cb * Tb]
+加设端点都是正的。
+a*b ->
+[Ca*Cb*(1-Ta)*(1-Tb), Ca*Cb*(1+Ta)*(1+Tb)]
+=
+[Ca*Cb*(1+Ta*Tb-Ta-Tb), Ca*Cb*(1+Ta*Tb+Ta+Tb)]
+Ta*Tb 可以忽略
+->
+[Ca*Cb*(1-Ta-Tb), Ca*Cb*(1+Ta+Tb)]
+->
+[Ca*Cb*(1-(Ta+Tb), Ca*Cb*(1+(Ta+Tb)))]
+```
+
+it appears that for small tolerances, the tolerance of the product will be approximately **the sum of the component tolerances.**
+
+
+
+After considerable work, Alyssa P. Hacker delivers her finished system. 
+
+Several years later, after she has forgotten all about it, she gets a frenzied call from an irate user, Lem E. Tweakit. 
+
+It seems that Lem has noticed that the formula for parallel resistors can be written in two algebraically equivalent ways:
+$$
+\begin{aligned}
+
+&\frac{1}{1/R_{1}+1/R_{2}}\\
+&\frac{R_{1}R_{2}}{R_{1}+R_{2}}
+\end{aligned}
+$$
+He has written the following two programs, each of which computes the parallel-resistors formula differently:
+
+```lisp
+(define (par1 r1 r2)
+  (let ((one (make-interval 1 1))) 
+    (div-interval one
+                  (add-interval (div-interval one r1)
+                                (div-interval one r2)))))
+(define (par2 r1 r2)
+  (div-interval (mul-interval r1 r2)
+                (add-interval r1 r2)))
+```
+
+Lem complains that Alyssa's program **gives different answers for the two ways of computing.  This is a serious complaint.**
+
+上面两种计算 并联 公式的结果不一样！
+
+
+
+公式1：
+$$
+\frac{1}{1/R_{1}+1/R_{2}}
+$$
+分子分母同时乘以 R1R2 就得到了公式2：
+$$
+\frac{R_{1}R_{2}}{R_{1}+R_{2}}
+$$
+
+![image-20240126105457024](exercise-2.assets/image-20240126105457024.png)
+
+可以发现 公式1 是正确的。
+
+```lisp
+(define R1 (make-interval-percent 6.8 0.1))
+(define R2 (make-interval-percent 4.7 0.05))
+```
+
+
+
+#### **Exercise 2.14.** 
+
+Demonstrate that Lem is right. Investigate the behavior of the system on a variety of arithmetic expressions. 
+
+Make some intervals *A* and *B*, and use them in computing the expressions *A*/*A* and *A*/*B*. 
+
+You will get the most insight **by using intervals whose width is a small percentage of the center value**. 
+
+Examine the results of the computation in **center-percent form** (see exercise 2.12).
+
+使用 width 占 center 较小的那些interval 进行测试。
+
+tolerance 越小，运算结果的 center 越符合数学算术，
+
+比如 A 的 center 是 Ca，B 的center是Cb，
+
+那么运算A op B 的center 就越接近 Ca op Cb
+
+
+
+这里的区间运算的核心前提是 **每个区间都是独立的，如果不独立，那么运算结果就是错的**。
+
+A 和 A 是不独立的，所以 A/A 的结果是错的。
+
+A 和 B 是独立的，所以A/B的结果是正确的。
+
+
+
+#### **Exercise 2.15.** 
+
+Eva Lu Ator, another user, has also noticed the different intervals computed by different but algebraically equivalent expressions. 
+
+She says that a formula to compute with intervals using Alyssa's system will produce tighter error bounds **if it can be written in such a form that no variable that represents an uncertain number is repeated.** 
+
+Thus, she says, `par1` is a "better'' program for parallel resistances than "par2". Is she right? Why?
+
+
+
+不同的代数等价表达式计算出的不同区间。
+
+只要独立，那么就是正确的。
+
+R1 + R2 和 R1 * R2 是相关的，所以 直接用 R1R2/(R1 + R2) 来代替并联公式是错的。
+
+1/R1 和 1/R2 是独立的，(1, 1) 和  1/R1 + 1/R2 是独立的，所以原始的 并联计算公式是正确的。
+
+
+
+#### **Exercise 2.16.** 
+
+Explain, in general, why equivalent algebraic expressions may lead to different answers. 
+
+为什么等价的代数表达式可能导致不同的答案？
+
+Can you devise an interval-arithmetic package that does not have this shortcoming, or is this task impossible? (Warning: This problem is very difficult.)
+
+您能设计一个没有这个缺点的区间算术包吗？
+
+或者这个任务是不可能完成的？
+
+
+
+这个任务是不可能完成的，本质应该是一个多元函数求最大值和最小值的问题。
+
+无法用这种区间算术来计算。
