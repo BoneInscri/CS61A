@@ -1032,3 +1032,69 @@ How much do you need to change your programs to convert to the new representatio
 
 
 
+#### **Exercise 2.30.** 
+
+Define a procedure `square-tree` analogous to the `square-list` procedure of exercise 2.21. 
+
+That is, `square-list` should behave as follows:
+
+```lisp
+(square-tree
+ (list 1
+       (list 2 (list 3 4) 5)
+       (list 6 7)))
+; (1 (4 (9 16) 25) (36 49))
+```
+
+Define `square-tree` both directly (i.e., **without using any higher-order procedures) and also by using `map` and recursion.**
+
+直接实现，不要用map或者其他的高阶过程。
+
+
+
+#### **Exercise 2.31.** 
+
+Abstract your answer to exercise 2.30 to produce a procedure `tree-map` with the property that `square-tree` could be defined as
+
+```lisp
+(define (square-tree tree) (tree-map square tree))
+```
+
+
+
+#### **Exercise 2.32.** 
+
+We can represent a set as a list of **distinct elements**, and we can represent the set of all subsets of the set as a list of lists. 
+
+- 用不同元素的list作为集合set
+- 集合的所有子集可以用一个list的list表示
+
+For example, if the set is `(1 2 3)`, then the set of all subsets is `(() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))`. 
+
+Complete the following definition of a procedure that generates the set of subsets of a set and give a clear explanation of why it works:
+
+```lisp
+(define (subsets s)
+  (if (null? s)
+      (list nil)
+      (let ((rest (subsets (cdr s))))
+        (append rest (map <??> rest)))))
+```
+
+
+
+```lisp
+(define (subsets s)
+  (if (null? s)
+      (list nil)
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (x)
+                            (cons (car s) x)) rest)))))
+```
+
+
+
+跟踪 rest的变化，就知道什么原理了
+
+![image-20240126195134920](exercise-2.assets/image-20240126195134920.png)
+
