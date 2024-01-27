@@ -1413,3 +1413,248 @@ Complete the following definitions of `reverse` (exercise 2.18) in terms of `fol
 
 
 
+#### **Exercise 2.40.** 
+
+Define a procedure `unique-pairs` that, given an integer *n*, generates the sequence of pairs (*i*,*j*) with 1<= *j*< *i*<= *n*. 
+
+Use `unique-pairs` to simplify the definition of `prime-sum-pairs` given above.
+
+- 先实现 unique-pairs
+- 然后 使用 unique-pairs 实现 prime-sum-pairs
+
+
+
+
+
+#### **Exercise 2.41.** 
+
+Write a procedure to find all **ordered** triples of **distinct** **positive** integers *i*, *j*, and *k* less than or equal to a given integer *n* that sum to a given integer *s*.
+
+1=<k<j<i<=n
+
+i+j+k == s
+
+
+
+**和 unique-pairs 不同，这里的unique-triples 需要两次 append !**
+
+
+
+#### **Exercise 2.42.** 
+
+**A solution to the eight-queens puzzle.**
+
+<img src="exercise-2.assets/image-20240127153220905.png" alt="image-20240127153220905" style="zoom:50%;" />
+
+The "eight-queens puzzle'' asks how to place eight queens on a chessboard so that no queen is in check from any other (i.e., no two queens are in the same row, column, or diagonal). 
+
+**没有两个皇后在同一行、同列或同对角线上**
+
+One possible solution is shown in figure 2.8. 
+
+One way to solve the puzzle is to work across the board, placing a queen in each column. 
+
+**Once we have placed *k* - 1 queens, we must place the *k*th queen in a position where it does not check any of the queens already on the board.** 
+
+We can formulate this approach **recursively**: 
+
+**Assume** that we have already generated the sequence of all possible ways to place *k* - 1 queens in the first *k* - 1 columns of the board. 
+
+加定此时我们已经再前k - 1 列放置了 k - 1 个 皇后
+
+For each of these ways, generate an extended set of positions by placing a queen in each row of the *k*th column. 
+
+在 第 k 列的每一行放置一个皇后
+
+Now filter these, **keeping only the positions for which the queen in the *k*th column is safe with respect to the other queens**.
+
+检查每种情况，过滤掉不安全的情况。 
+
+This produces the sequence of all ways to place *k* queens in the first *k* columns. 
+
+于是就完成了将k个皇后放在前k列中的所有方法序列。
+
+By continuing this process, we will produce not only one solution, but all solutions to the puzzle.
+
+**于是就可以得到解决方法了。**
+
+We implement this solution as a procedure `queens`, 
+
+**which returns a sequence of all solutions to the problem of placing *n* queens on an *n*× *n* chessboard.** 
+
+参数就是一个n，即表示一个 n x n 大小的棋盘。
+
+`Queens` has an internal procedure `queen-cols` that **returns the sequence of all ways to place queens in the first *k* columns of the board.**
+
+' Queens '有一个内部过程' queen-cols '，
+
+它返回将皇后放置在棋盘前k列中的所有方法的序列。
+
+```lisp
+(define (queens board-size)
+  (define (queen-cols k)  
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (rest-of-queens)
+            (map (lambda (new-row)
+                   (adjoin-position new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+```
+
+In this procedure `rest-of-queens` is a way to place *k* - 1 queens in the first *k* - 1 columns, and `new-row` is a proposed row **in which to place the queen for the *k*th column**. 
+
+Complete the program by implementing the representation for sets of board positions, including the procedure `adjoin-position`, **which adjoins a new row-column position to a set of positions**, and `empty-board`, which **represents an empty set of positions**. 
+
+You must also write the procedure `safe?`, **which determines for a set of positions, whether the queen in the *k*th column is safe with respect to the others**. 
+
+(Note that we need **only** check **whether the new queen is safe** -- the other queens are already guaranteed safe with respect to each other.)
+
+实现：
+
+（1）rest-of-queens
+
+（2）new-row
+
+（**3）adjoin-position**
+
+（4）empty-board
+
+**（5）safe?**
+
+
+
+想半天，为什么 safe? 需要用到k？居然是可以不需要用k的。。。
+
+**初始返回的空棋盘 是一个 (( ))**
+
+最外层括号表示所有解的集合，里层的括号表示一个空解，即棋盘上没有放皇后。
+
+- **一个点** 用 一个括号括起来，
+- 多个点 用 一个括号括起来就是一个**解**，
+- 多个解 用括号 括起来，就是**所有解的集合**，
+- 解的数量就是 length的值。
+
+```
+(enumerate-interval 1 board-size)
+```
+
+加设 是 4 * 4 的棋盘，那么 上面的表达式就可以生成 ( 1 2 3 4) 的list
+
+```lisp
+(map (lambda (new-row) 
+             (adjoin-position new-row
+                              k rest-of-queens)) 
+     (enumerate-interval 1 board-size))
+```
+
+这个map就是得到 **((1 k) (2 k) (3 k) (4 k))** 这个list
+
+
+
+看清楚，这里map 和 flatmap 是两层的map。
+
+所以会用乘法枚举所有情况。
+
+(queen-cols (- k 1)) 就是前k-1列解的情况。
+
+比如 k = 1 时， (queen-cols (- k 1)) 就是 (())
+
+那么经过 flatmap 和 map 处理之后就会变成
+
+( ((1 1)) ((2 1)) ((3 1)) ((4 1)) )
+
+flapmap 的直观含义就是对一个list的每个元素**从左到右执行某个特定的过程**，最后将结果用list串起来。
+
+继续一轮，就会得到 ：
+
+```
+((1 2) (1 1))
+((2 2) (1 1))
+((3 2) (1 1))
+((4 2) (1 1))
+((1 2) (2 1))
+((2 2) (2 1))
+((3 2) (2 1))
+((4 2) (2 1))
+((1 2) (3 1))
+((2 2) (3 1))
+((3 2) (3 1))
+((4 2) (3 1))
+((1 2) (4 1))
+((2 2) (4 1))
+((3 2) (4 1))
+((4 2) (4 1))
+```
+
+然后就是过滤一些不满足要求的
+
+如何理解safe？
+
+```lisp
+(define (safe? y)
+  (= 0 (accumulate + 0 
+                   (map (lambda (x) 
+                          (if (check (car y) x) 0 1)) 
+                        (cdr y))))) 
+```
+
+这里传递到safe? 的y是所有可能的棋盘情况。
+
+就是一个点的集合，我们需要过滤掉所有不满足条件的情况。
+
+- (car y) 得到的是第一个点，刚好就是第k列新加入的点。
+- (cdr y) 得到的是多个点的list，刚好就是前k-1列满足条件的点的集合。
+
+所以这个accumulate 的 map 就好理解了，就是遍历前k-1列的所有点，如果发现这个点和第一个点不满足条件，就map成0，否则map成1，最后用accumulate累加，如果发现是0，则说明所有的点都满足条件，那么就是safe的。
+
+
+
+**这个题目想写对，很不容易。**
+
+
+
+
+
+#### **Exercise 2.43.** 
+
+Louis Reasoner is having a terrible time doing exercise 2.42. 
+
+His `queens` procedure seems to work, but it runs extremely slowly.
+
+ (Louis never does manage to wait long enough for it to solve even the 6× 6 case.) 
+
+When Louis asks Eva Lu Ator for help, she points out that he has interchanged the order of the nested mappings in the `flatmap`, writing it as
+
+```lisp
+(flatmap
+ (lambda (new-row)
+   (map (lambda (rest-of-queens)
+          (adjoin-position new-row k rest-of-queens))
+        (queen-cols (- k 1))))
+ (enumerate-interval 1 board-size))
+```
+
+Explain why this interchange makes the program run slowly. 
+
+Estimate how long it will take Louis's program to solve the eight-queens puzzle, assuming that the program in exercise 2.42 solves the puzzle in time *T*.
+
+（1）解释为什么变慢了？
+
+（2）相对于2.42 的写法来说花费的时间是多少？
+
+这里应该是交换了 map 和 flatmap 里面操作的对象吧。。
+
+```
+(queen-cols (- k 1))
+```
+
+- 放到了里面，就会导致每次都会重新计算一次。。。
+- 放到外面，只需要计算一次，就可以得到list。
+
+如果是 8 * 8 的棋盘，那么对于每一列，都会有 8 次的重复计算，由于有 8 列，所以 总时间就是 (8 * 8) T 
+
