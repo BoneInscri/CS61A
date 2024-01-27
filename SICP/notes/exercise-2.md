@@ -1098,3 +1098,318 @@ Complete the following definition of a procedure that generates the set of subse
 
 ![image-20240126195134920](exercise-2.assets/image-20240126195134920.png)
 
+
+
+#### **Exercise 2.33.** 
+
+Fill in the missing expressions to complete the following definitions of some basic list-manipulation operations as accumulations:
+
+```lisp
+(define (map p sequence)
+    (accumulate (lambda (x y) <??>) nil sequence))
+(define (append seq1 seq2)
+    (accumulate cons <??> <??>))
+(define (length sequence)
+    (accumulate <??> 0 sequence))
+```
+
+```lisp
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op initial (cdr sequence)))))
+
+(define (map p sequence)
+    (accumulate (lambda (x y) (cons (p x) y)) nil sequence))
+
+(define (append seq1 seq2)
+    (accumulate cons seq2 seq1))
+
+(define (length sequence)
+    (accumulate (lambda (x y) (+ 1 y)) 0 sequence))
+```
+
+看着accumulate定义写
+
+
+
+#### **Exercise 2.34.** 
+
+Evaluating a polynomial in *x* at a given value of *x* can be formulated as an accumulation. 
+
+We evaluate the polynomial
+
+计算多项式在x处的函数值。
+$$
+a_{n}x^{n}+a_{n-1}x^{n-1}+\cdots+a_{1}x+a_{0}
+$$
+using a well-known algorithm called ***Horner's rule***, which structures the computation as
+$$
+(\cdots(a_{n}x+a_{n-1})x+\cdots+a_{1})x+a_{0}
+$$
+霍纳规则？秦九韶算法。
+
+In other words, we start with $a_n$, multiply by x, add $a_{n-1}$, multiply by x, and so on, until we reach $a_0$
+
+Fill in the following template to produce a procedure that evaluates a **polynomial using Horner's rule.** 
+
+Assume that **the coefficients of the polynomial are arranged in a sequence,** 
+
+系数在一个list中，就是 $a_0$ 到 $a_n$
+
+from $a_0$ through $a_n.$
+
+```lisp
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (this-coeff higher-terms) <??>)
+              0
+              coefficient-sequence))
+```
+
+For example, to compute $1+3x+5x^3 + x^5$ at x=2 you would evaluate
+
+```lisp
+(horner-eval 2 (list 1 3 0 5 0 1))
+```
+
+```lisp
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (this-coeff higher-terms)
+                (+ this-coeff (* x higher-terms)))
+              0
+              coefficient-sequence))
+```
+
+**(...) x + a0**
+
+
+
+#### **Exercise 2.35.** 
+
+Redefine `count-leaves` from section 2.2.2 as an accumulation:
+
+```lisp
+(define (count-leaves t)
+  (accumulate <??> <??> (map <??> <??>)))
+```
+
+主要就是这个map 怎么填。没有想到特别好的办法，只能先将t 用enumerate 映射得到一个list，list的每个成员都是list，只有一层。
+
+然后就是用length进行求和
+
+```lisp
+(define (count-leaves t)
+  (accumulate (lambda (x y) (+ (length x) y)) 0
+              (map (lambda (x) (enumerate-tree x)) t)))
+```
+
+
+
+#### **Exercise 2.36.** 
+
+The procedure `accumulate-n` is similar to `accumulate` except that it **takes as its third argument a sequence of sequences,** which are all assumed to **have the same number of elements.** 
+
+第三个参数是一个序列序列
+
+假定所有序列都具有相同数量的元素
+
+It applies the designated accumulation procedure to combine all the **first** elements of the sequences, all the second elements of the sequences, and so on, and returns a sequence of the results. 
+
+For instance, 
+
+if `s` is a sequence containing four sequences,
+
+ `((1 2 3) (4 5 6) (7 8 9) (10 11 12)),`
+
+ **then the value of `(accumulate-n + 0 s)`** should be the sequence `(22 26 30)`. 
+
+**(1+4+7+10, 2+5+8+11, 3+6+9+12)**
+
+Fill in the **missing expressions** in the following definition of `accumulate-n`:
+
+```lisp
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init <??>)
+            (accumulate-n op init <??>))))
+```
+
+太难想了，答案居然是map car 和 map cdr
+
+即一次移动一列。。。
+
+```lisp
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+```
+
+
+
+#### **Exercise 2.37.** 
+
+Suppose we represent vectors $v=(v_j)$ **as sequences of numbers**, 
+
+and matrices $m=(m_{ij})$ as sequences of vectors (**the rows of the matrix**). 
+
+For example, the **matrix**
+$$
+\left.\left[\begin{array}{cccc}1&2&3&4\\4&5&6&6\\6&7&8&9\end{array}\right.\right]
+$$
+is represented as the sequence `((1 2 3 4) (4 5 6 6) (6 7 8 9))`. 
+
+向量是一个数字的list，矩阵是list的list。
+
+With this representation, we can use sequence operations to concisely express the basic matrix and vector operations. 
+
+These operations (which are described in any book on matrix algebra) are the following:
+
+向量和矩阵的运算：
+
+**（1）点乘，(dot-product v w)**
+$$
+\Sigma_{i}v_{i}w_{i}.
+$$
+**（2）矩阵乘向量，(matrix-*-vector m v)**
+$$
+\mathrm{returns~the~vector~t,~where~}t_{i}=\sum_{j}m_{ij}v_{j}.
+$$
+**（3）矩阵乘矩阵，(matrix-*-matrix m n)**
+$$
+\mathrm{returns~the~matrix~p,~where~p}_{ij}=\sum_{k}m_{ik}n_{kj}.
+$$
+**（4）矩阵的转置，(transpose m)**
+$$
+\mathrm{returns~the~inatrix~}n,\mathrm{~where~}n_{ij}=m_{ji}.
+$$
+
+```lisp
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+```
+
+上面用的map是扩展后的map
+
+```lisp
+(map + (list 1 2 3) (list 40 50 60) (list 700 800 900))
+; (741 852 963)
+
+(map (lambda (x y) (+ x (* 2 y)))
+     (list 1 2 3)
+     (list 4 5 6))
+; (9 12 15)
+```
+
+Fill in the missing expressions in the following procedures for computing the other matrix operations. (The procedure `accumulate-n` is defined in exercise 2.36.)
+
+```lisp
+(define (matrix-*-vector m v)
+  (map <??> m))
+(define (transpose mat)
+  (accumulate-n <??> <??> mat))
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map <??> m)))
+```
+
+答案：
+
+```lisp
+; 矩阵乘向量
+(define (matrix-*-vector m v)
+  (map (lambda (x) (dot-product x v)) m))
+; 矩阵转置
+(define (transpose mat)
+  (accumulate-n cons nil mat))
+; 矩阵乘矩阵
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (x) (matrix-*-vector cols x)) m)))
+```
+
+
+
+
+
+#### **Exercise 2.38.** 
+
+The `accumulate` procedure is also known as `fold-right`, because **it combines the first element of the sequence with the result of combining all the elements to the right.** 
+
+右折叠，即将第一个元素和右边的所有元素进行 combine
+
+There is also a `fold-left`, which is similar to `fold-right`, except that it combines elements working **in the opposite direction:**
+
+反向运算。
+
+```lisp
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter initial sequence))
+```
+
+What are the values of
+
+```lisp
+(fold-right / 1 (list 1 2 3))
+(fold-left / 1 (list 1 2 3))
+(fold-right list nil (list 1 2 3))
+(fold-left list nil (list 1 2 3))
+```
+
+**Give a property that `op` should satisfy to guarantee that `fold-right` and `fold-left` will produce the same values for any sequence.**
+
+
+
+**op 应该满足什么性质，fold-right 和 fold-left 才能有相同的结果？**
+
+```
+a b c d
+(((a op b) op c) op d) fold-right
+(((d op c) op b) op a) fold-left
+```
+
+举例，+ 和 * ，即加法和乘法是肯定可以的。
+
+减法和除法是不行的，cons也是不行的。
+
+**op 需要满足 a op b 和 b op a 是等价的才可以。**
+
+即op 的左右两个操作数是可交换的，那么fold-right 和 fold-left 的结果才相同。
+
+
+
+#### **Exercise 2.39.**  
+
+Complete the following definitions of `reverse` (exercise 2.18) in terms of `fold-right` and `fold-left` from exercise 2.38:
+
+```lisp
+(define (reverse sequence)
+  (fold-right (lambda (x y) <??>) nil sequence))
+(define (reverse sequence)
+  (fold-left (lambda (x y) <??>) nil sequence))
+```
+
+用fold-right 实现 reverse 需要借助 append
+
+```lisp
+(define (reverse sequence)
+  (fold-right (lambda (x y)
+                (if (null? y)
+                    (list x)
+                    (append y (list x))
+                ))
+              nil sequence))
+(define (reverse sequence)
+ (fold-left (lambda (x y) (cons y x)) nil sequence))
+```
+
+
+
