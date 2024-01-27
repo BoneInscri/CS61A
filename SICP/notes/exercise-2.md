@@ -1658,3 +1658,70 @@ Estimate how long it will take Louis's program to solve the eight-queens puzzle,
 
 如果是 8 * 8 的棋盘，那么对于每一列，都会有 8 次的重复计算，由于有 8 列，所以 总时间就是 (8 * 8) T 
 
+
+
+
+
+#### **Exercise 2.44.** 
+
+Define the procedure `up-split` used by `corner-split`. 
+
+It is similar to `right-split`, except that **it switches the roles of `below` and `beside`.**
+
+定义corner-split 使用的 up-split。
+
+可以参考 right-split 实现。
+
+
+
+问题就是没法测试代码？
+
+If you are using DrRacket, follow these steps:
+
+\1) Install the package sicp.plt (Go to file>Install Package, type 'sicp.plt' in package source)
+
+\2) Paste this code '(require (planet "sicp.ss" ("soegaard" "sicp.plt" 2 1)))' in your rkt file.
+
+\3) Test the file with the code '(paint einstein)'. You should see a picture of Einstein in your command line.
+
+https://www.zhihu.com/question/20789155
+
+
+
+```
+#lang sicp
+(#%require sicp-pict)
+```
+
+别搞错意思了，这个题目就是实现 up-split，只不过这个up-split被corner-split所使用。
+
+
+
+#### **Exercise 2.45.** 
+
+`Right-split` and `up-split` can be expressed **as instances of a general splitting operation**. 
+
+Define a procedure `split` with the property that evaluating
+
+```lisp
+(define right-split (split beside below))
+(define up-split (split below beside))
+```
+
+produces procedures `right-split` and `up-split` with the same behaviors **as the ones already defined.**
+
+左拆分和右拆分可以统一为一个抽象。
+
+需要注意的是这里的split返回的是一个递归的lambda表达式，所以按照下面的方式即进行定义会更好一些。
+
+```lisp
+(define (split op1 op2)
+  (define (iter painter n)
+    (if (= n 0)
+        painter
+        (let ((smaller (iter painter (- n 1))))
+          (op1 painter (op2 smaller smaller)))
+        ))
+  (lambda (painter n) (iter painter n)))
+```
+
