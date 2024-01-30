@@ -1725,3 +1725,193 @@ produces procedures `right-split` and `up-split` with the same behaviors **as th
   (lambda (painter n) (iter painter n)))
 ```
 
+
+
+#### **Exercise 2.46.** 
+
+A two-dimensional vector **v** running from the origin to a point can be represented as a pair consisting of an *x*-coordinate and a *y*-coordinate. 
+
+以原点为起点的二维向量可以用 (x, y) 表示。
+
+Implement a data abstraction for vectors by giving a constructor `make-vect` and corresponding selectors `xcor-vect` and `ycor-vect`. 
+
+In terms of your selectors and constructor, implement procedures `add-vect`, `sub-vect`, and `scale-vect` that perform the operations vector addition, vector subtraction, and multiplying a vector by a scalar:
+$$
+\begin{array}{rcl}{(\mathbf{x}_{1},y_{1})+(\mathbf{x}_{2},y_{2})}&{=}&{(\mathbf{x}_{1}+\mathbf{x}_{2},y_{1}+y_{2})}\\{(\mathbf{x}_{1},y_{1})-(\mathbf{x}_{2},y_{2})}&{=}&{(\mathbf{x}_{1}-\mathbf{x}_{2},y_{1}-y_{2})}\\{s\cdot(\mathbf{x},y)}&{=}&{(s\mathbf{x},sy)}\\\end{array}
+$$
+实现：
+
+- （1）make-vect
+- （2）xcor-vect 
+- （3）ycor-vect
+- （4）add-vect
+- （5）sub-vect
+- （6）scale-vect
+
+向量加法、向量减法、向量缩放
+
+
+
+#### **Exercise 2.47.** 
+
+Here are two possible constructors for frames:
+
+```lisp
+(define (make-frame origin edge1 edge2)
+  (list origin edge1 edge2))
+
+(define (make-frame origin edge1 edge2)
+  (cons origin (cons edge1 edge2)))
+```
+
+For each constructor supply the appropriate selectors to produce an implementation for frames.
+
+**实现 frames 的选择器**
+
+
+
+
+
+#### **Exercise 2.48.** 
+
+**A directed line segment in the plane** can be represented as a pair of vectors -- the vector running from the origin to the start-point of the segment, and the vector running from the origin to the end-point of the segment. 
+
+如何表示平面中的一个有向线段？
+
+- -从原点到起点的向量
+- -从原点到终点的向量
+
+Use your vector representation from exercise 2.46 to define a representation for segments with a constructor `make-segment` and selectors `start-segment` and `end-segment`.
+
+
+
+#### **Exercise 2.49.** 
+
+Use `segments->painter` to define the following primitive painters:
+
+a. The painter that **draws the outline of the designated frame**.
+
+b. The painter that draws an "X'' by **connecting opposite corners of the frame.**
+
+c. The painter that draws a **diamond shape** by connecting the midpoints of the sides of the frame.
+
+d. **The `wave` painter.**
+
+
+
+（1）矩形、X、棱形
+
+（2）wave？
+
+draw
+
+https://www.lispworks.com/documentation/lw70/CAPI-W/html/capi-w-717.htm
+
+不要自己定义 segments->painter，而是用库里面的。
+
+![image-20240130112723308](exercise-2.assets/image-20240130112723308.png)
+
+segment、vector也不要用自己的，要用库里面的，然后绘制图像需要用具体的点
+
+
+
+#### **Exercise 2.50.** 
+
+Define the transformation `flip-horiz`, which flips painters horizontally, 
+
+and transformations that rotate painters counterclockwise by 180 degrees and 270 degrees.
+
+逆时针旋转。
+
+**（1）flip-horiz**
+
+**（2）rotate270**
+
+**（3）rotate180**
+
+roate180 和 rotate270 可以用 repeated 和 rotate90 来实现。
+
+
+
+
+
+#### **Exercise 2.51.** 
+
+Define the `below` operation for painters. 
+
+`Below` takes two painters as arguments. 
+
+The resulting painter, given a frame, **draws with the first painter in the bottom of the frame and with the second painter in the top.** 
+
+Define `below` in two different ways -- first by writing a procedure that is analogous to the `beside` procedure given above, and again in terms of `beside` and suitable rotation operations (from exercise 2.50).
+
+（1）实现below，第一种是仿造beside实现below
+
+```lisp
+; beside
+(define (beside painter1 painter2)
+  (let ((split-point (make-vect 0.5 0.0)))
+    (let ((paint-left
+           (transform-painter painter1
+                              (make-vect 0.0 0.0)
+                              split-point
+                              (make-vect 0.0 1.0)))
+          (paint-right
+           (transform-painter painter2
+                              split-point
+                              (make-vect 1.0 0.0)
+                              (make-vect 0.5 1.0))))
+      (lambda (frame)
+        (paint-left frame)
+        (paint-right frame)))))
+
+; below
+(define (below-1 painter1 painter2)
+  (let ((split-point (make-vect 0.0 0.5)))
+    (let ((paint-up
+           (transform-painter painter1
+                              (make-vect 0.0 0.0)
+                              (make-vect 1.0 0.0)
+                              split-point
+                              ))
+          (paint-down
+           (transform-painter painter2
+                              split-point
+                              (make-vect 1.0 0.5)
+                              (make-vect 0.0 1.0))))
+      (lambda (frame)
+        (paint-up frame)
+        (paint-down frame)))))
+```
+
+（2）实现below，第二种是使用beside + 合适的旋转来实现
+
+```lisp
+(define (below-2 painter1 painter2)
+  (rotate270 (beside (rotate90 painter1) (rotate90 painter2))))
+```
+
+![image-20240130142338815](exercise-2.assets/image-20240130142338815.png)
+
+
+
+
+
+#### **Exercise 2.52.** 
+
+Make changes to the **square limit of `wave`** shown in figure 2.9 by working at each of the levels described above. In particular:
+
+a. Add some segments to the primitive `wave` painter of exercise  2.49 (**to add a smile, for example).**
+
+b. Change the pattern constructed by `corner-split` (for example, **by using only one copy of the `up-split` and `right-split` images instead of two)**.
+
+c. Modify the version of `square-limit` that uses `square-of-four` so as to assemble the corners in a different pattern. (For example, **you might make the big Mr. Rogers look outward from each corner of the square**.)
+
+（1）wave painter中添加一些细节，比如，一个smile
+
+（2）修改 corner-split 的模式，比如，只使用up或者right的一个
+
+（3）修改square-limit来改变 corners 的模式
+
+
+
