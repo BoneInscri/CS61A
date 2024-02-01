@@ -1981,3 +1981,112 @@ To her surprise, the interpreter prints back `quote`. Explain.
  ;; (car (quote (quote something))) 
 ```
 
+
+
+#### **Exercise 2.56.** 
+
+Show how to extend the basic differentiator to handle more kinds of expressions. 
+
+扩展微分的表达式！
+
+For instance, **implement the differentiation rule**
+$$
+\frac{d(u^{n})}{dx}=nu^{n-1}\left(\frac{du}{dx}\right)
+$$
+by adding a new clause to the `deriv` program and defining appropriate procedures `exponentiation?`, `base`, `exponent`, and `make-exponentiation`. 
+
+添加：
+
+**（1）exponentiation?**
+
+**（2）base**
+
+**（3）exponent**
+
+**（4）make-exponentiation**
+
+
+
+**(You may use the symbol `**` to denote exponentiation.)** 
+
+Build in the rules that 
+
+- anything raised to the power 0 is 1
+- anything raised to the power 1 is the thing itself.
+
+任何数的0次方的都是1。
+
+任何数的1次方的都是它本身。
+
+
+
+这里的 n 应该是数字。。。
+
+
+
+#### **Exercise 2.57.** 
+
+Extend the differentiation program to handle **sums and products of arbitrary numbers of (two or more) terms.** 
+
+加法和乘法的项可以有多个。
+
+Then the last example above could be expressed as
+
+```lisp
+(deriv '(* x y (+ x 3)) 'x)
+```
+
+Try to do this by changing only the representation for sums and products
+
+, **without changing the `deriv` procedure at all.** 
+
+For example, the `addend` of a sum would be the first term, and the `augend` would **be the sum of the rest of the terms.**
+
+
+
+
+
+#### **Exercise 2.58.** 
+
+Suppose we want to modify the differentiation program so that it works **with ordinary mathematical notation, in which `+` and `*` are infix rather than prefix operators**. 
+
+非前缀表达式，而是中缀表达式
+
+Since the differentiation program is defined in terms of abstract data, we can modify it to work with different representations of expressions solely **by changing the predicates, selectors, and constructors** that define the representation of the algebraic expressions on which the differentiator is to operate.
+
+a. Show how to do this in order to differentiate algebraic expressions presented **in infix form**, such as `(x + (3 * (x + (y + 2))))`. To simplify the task, assume that `+` and `*` always take two arguments and that expressions are fully parenthesized.
+
+b. The problem becomes substantially harder if we allow standard algebraic notation, such as `(x + 3 * (x + y + 2))`, which drops unnecessary parentheses and assumes that multiplication is done before addition. Can you design appropriate predicates, selectors, and constructors for this notation such that our derivative program still works?
+
+
+
+（1）改中缀
+
+（2）乘法优先级比加法高
+
+（3）仅修改 predicates、selectors和constructors
+
+
+
+首先就是 sum? 和 product? 怎么改
+
+找到表达式中优先级最低的那个符号。
+
+将前缀表达式改成中缀之后，发现修改更少了！！
+
+将所有的 双目 运算抽象为 ：
+
+```
+() op ()
+```
+
+prefix 和 suffix 就是左边和右边
+
+op 表示最低优先级的那个符号，如果优先级相同，则考虑最左边那个。
+
+
+
+
+
+
+
