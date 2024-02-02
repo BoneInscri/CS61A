@@ -2156,5 +2156,247 @@ Give a $\theta(n)$ implementation of `union-set` for sets represented as ordered
 
 
 
+#### **Exercise 2.63.** 
+
+Each of the following two procedures converts a binary tree to a list.
+
+将二叉树转换为列表。
+
+```lisp
+(define (tree->list-1 tree)
+    (if (null? tree)
+        '()
+        (append (tree->list-1 (left-branch tree))
+                (cons (entry tree)
+                      (tree->list-1 (right-branch tree))))))
+(define (tree->list-2 tree)
+    (define (copy-to-list tree result-list)
+        (if (null? tree)
+            result-list
+            (copy-to-list (left-branch tree)
+                          (cons (entry tree)
+                                (copy-to-list (right-branch tree)
+                                              result-list)))))
+    (copy-to-list tree '()))
+```
+
+a. Do the two procedures produce the same result for every tree? If not, how do the results differ? 
+
+What lists do the two procedures produce for the trees in figure 2.16?
+
+（1）结果相同吗？
+
+（2）有什么不同？
+
+b. Do the two procedures have the same order of growth in the number of steps required to convert a balanced tree with *n* elements to a list? If not, which one grows more slowly?
+
+（3）将 n 个元素的平衡树转化为一个list所需要的步骤数
+
+（4）那个更快？
+
+
+
+结果都是一样的，都是左中右的顺序
+
+
+
+第二个要快一些，$T(n) = O(n)$
+
+第一个每次都需要append，$T(n)=O(nlogn)$
+
+
+
+#### **Exercise 2.64.** 
+
+The following procedure `list->tree` converts an ordered list to a balanced binary tree. 
+
+The helper procedure `partial-tree` takes as arguments an integer *n* and list of at least *n* elements and **constructs a balanced tree containing the first *n* elements of the list.** 
+
+构造平衡二叉树
+
+The result returned by `partial-tree` is a pair (formed with `cons`) whose `car` is the constructed tree and whose `cdr` is the list of elements not included in the tree.
+
+```lisp
+(define (list->tree elements)
+  (car (partial-tree elements (length elements))))
+
+(define (partial-tree elts n)
+  (if (= n 0)
+      (cons '() elts)
+      (let ((left-size (quotient (- n 1) 2)))
+        (let ((left-result (partial-tree elts left-size)))
+          (let ((left-tree (car left-result))
+                (non-left-elts (cdr left-result))
+                (right-size (- n (+ left-size 1))))
+            (let ((this-entry (car non-left-elts))
+                  (right-result (partial-tree (cdr non-left-elts)
+                                              right-size)))
+              (let ((right-tree (car right-result))
+                    (remaining-elts (cdr right-result)))
+                (cons (make-tree this-entry left-tree right-tree)
+                      remaining-elts))))))))
+```
+
+a. Write a short paragraph explaining as clearly as you can how `partial-tree` works. 
+
+Draw the tree produced by `list->tree` for the list `(1 3 5 7 9 11)`.
+
+b. What is the order of growth in the number of steps required by `list->tree` to convert a list of *n* elements?
+
+（1）理解这个过程
+
+（2）看最后得到的平衡树长什么样子
+
+
+
+```
+(1 3 5 7 9 11)
+->
+(5 (1 () (3 () ())) (9 (7 () ()) (11 () ())))
+->
+(5 (1 ()
+      (3
+       ()
+       ()))
+   (9 (7 () ())
+      (11 () ()))
+   )
+```
+
+<img src="exercise-2.assets/image-20240202103731342.png" alt="image-20240202103731342" style="zoom:80%;" />
+
+基本思路就是
+
+```lisp
+(cons (make-tree this-entry left-tree right-tree) remaining-elts)
+```
+
+找到 this-entry、left-tree、right-tree 和 remaining-elts就可以递归构造了
+
+边界情况就是 传入的 n 为0，即表示左侧没有子树，在list的左侧加一个 nil 即可
+
+（1）对于一个list而言，结点 = this_entry + left-tree + right-tree
+
+（2）left-size 就是 (n-1) / 2，right-size 就是 n - (n - 1)/2
+
+（3）left-result 可以通过递归得到。
+
+（4）left-tree 就是 其 左子树的第一个结点
+
+（5）non-left-elts 就是 非左子树部分的结点
+
+（6）this-entry 就是 非左子树部分结点的第一个
+
+（7）right-result 可以通过递归得到。
+
+（8）right-tree 就是右子树部分结点的第一个
+
+（9）remaining-elts 就是剩余的结点
+
+
+
+时间复杂度是 $O(n)$
+
+
+
+
+
+#### **Exercise 2.65.** 
+
+Use the results of exercises 2.63 and  2.64 to give $\theta(n)$ implementations of `union-set` and `intersection-set` for sets implemented as (balanced) binary trees.
+
+实现 平衡二叉树的 集合 set 的交集和并集过程。
+
+
+
+（1）可以用 2.63  和 2.64 的 list->tree，还有  tree->list ，毕竟都是 $\theta(n)$
+
+（2）也可以重新写
+
+```lisp
+(define (union-set a b) 
+   (cond ((null? a) b) 
+         ((null? b) a) 
+         (else 
+          (let ((a-entry (entry a)) 
+                (a-left-branch (left-branch a)) 
+                (a-right-branch (right-branch a)) 
+                (b-entry (entry b)) 
+                (b-left-branch (left-branch b)) 
+                (b-right-branch (right-branch b))) 
+            (cond ((= a-entry b-entry) 
+                   (make-tree a-entry 
+                              (union-set a-left-branch b-left-branch) 
+                              (union-set a-right-branch b-right-branch))) 
+                  ((< a-entry b-entry) 
+                   (make-tree b-entry 
+                              (union-set a b-left-branch) 
+                              b-right-branch)) 
+                  ((> a-entry b-entry) 
+                   (make-tree a-entry 
+                              (union-set a-left-branch b) 
+                              a-right-branch))))))) 
+ (define (intersection-set a b) 
+   (cond ((null? a) ()) 
+         ((null? b) ()) 
+         (else 
+          (let ((a-entry (entry a)) 
+                (a-left-branch (left-branch a)) 
+                (a-right-branch (right-branch a)) 
+                (b-entry (entry b)) 
+                (b-left-branch (left-branch b)) 
+                (b-right-branch (right-branch b))) 
+            (cond ((= a-entry b-entry) 
+                   (make-tree a-entry 
+                              (intersection-set a-left-branch b-left-branch) 
+                              (intersection-set a-right-branch b-right-branch))) 
+                  ((< a-entry b-entry) 
+                   (union-set 
+                    (intersection-set a-right-branch 
+                                      (make-tree b-entry () b-right-branch)) 
+                    (intersection-set (make-tree a-entry a-left-branch ()) 
+                                      b-left-branch))) 
+                  ((> a-entry b-entry) 
+                   (union-set 
+                    (intersection-set (make-tree a-entry () a-right-branch) 
+                                      b-right-branch) 
+                    (intersection-set a-left-branch 
+                                      (make-tree b-entry b-left-branch ()))))))))) 
+```
+
+
+
+主要就是利用了  left-branch < entry < right-branch 这个性质！
+
+
+
+#### **Exercise 2.66.** 
+
+Implement the `lookup` procedure for the case **where the set of records is structured as a binary tree, ordered by the numerical values of the keys.**
+
+如果records-set 是通过 binary tree 实现的，请实现 lookup
+
+
+
+这个题目居然是让我们写 数据库的查找语句。。。太牛了
+
+```lisp
+(define (lookup given-key set-of-records)
+  (cond ((null? set-of-records) false)
+        ((equal? given-key (key (entry set-of-records)))
+         (entry set-of-records)
+         )
+        ((< given-key (key (entry set-of-records)))
+         (lookup given-key (left-branch set-of-records))
+         )
+        ((> given-key (key (entry set-of-records)))
+         (lookup given-key (right-branch set-of-records))
+         )
+        )
+  )
+```
+
+
+
 
 
