@@ -2086,6 +2086,74 @@ op 表示最低优先级的那个符号，如果优先级相同，则考虑最�
 
 
 
+#### **Exercise 2.59.** 
+
+Implement the `union-set` operation for the unordered-list representation of sets.
+
+实现并集
+
+
+
+
+
+#### **Exercise 2.60.** 
+
+We specified that a set would be represented as a list with no duplicates. 
+
+之前是集合不能重复，但是现在可以重复
+
+Now suppose we allow duplicates. 
+
+**For instance, the set {1,2,3} could be represented as the list `(2 3 2 1 3 2 2)`.** 
+
+Design procedures `element-of-set?`, `adjoin-set`, `union-set`, and `intersection-set` that operate on this representation. 
+
+How does the efficiency of each compare with the corresponding procedure for the non-duplicate representation? 
+
+Are there applications for which you would use this representation in preference to the non-duplicate one?
+
+（1）实现元素可重复的集合
+
+（2）element-of-set?、adjoin-set、union-set和intersection-set
+
+（3）比较效率
+
+
+
+adjoin-set 变 $O(1)$
+
+但是 element-of-set? 的比较时间可能会变长。
+
+
+
+#### **Exercise 2.61.** 
+
+Give an implementation of `adjoin-set` using the ordered representation. 
+
+By **analogy** with `element-of-set?` show how to take advantage of the ordering to produce a procedure that requires on the average about half as many steps as with the unordered representation.
+
+实现 集合 的**有序列表表示的 adjoin-set** 
+
+（1）如果在遍历list的过程中就找到了这个元素，那么直接返回set
+
+（2）最坏情况就是遍历到list的最后一个，发现没有，那么将这个元素插入最后即可
+
+（3）如果在中间某个时刻发现  (car set) < x < (cadr set)，那么将x 插入这两个元素之间即可，保证list有序。
+
+
+
+#### **Exercise 2.62.** 
+
+Give a $\theta(n)$ implementation of `union-set` for sets represented as ordered lists.
+
+给出 有序列表表示集合的 union-set 的过程描述。
+
+比较两个集合的第一个元素 x1 和 x2
+
+- 如果x1 == x2 ，那么集合的交集剩余部分就是 (cdr set1) 和 (cdr set2)，需要将x1/x2放入并集
+- 如果x1 < x2，那么x1 一定不在 set2 中，那么集合的交集就是 (cdr set1) 和 set2 的并集，需要将x1放入并集
+- 如果x2 < x1，那么x2 一定不在 set1 中，那么集合的交集就是 (cdr set2) 和 set1 的并集，需要将x2放入并集
+
 
 
 
