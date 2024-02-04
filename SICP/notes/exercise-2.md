@@ -2640,3 +2640,296 @@ Consider the special case where the relative frequencies of the *n* symbols are 
 
 树的深度是 n - 1
 
+
+
+#### **Exercise 2.73.** 
+
+Section 2.3.2 described a program that performs symbolic differentiation:
+
+回忆，之前我们写了一个计算函数微分的程序。
+
+```lisp
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp) (if (same-variable? exp var) 1 0))
+        ((sum? exp)
+         (make-sum (deriv (addend exp) var)
+                   (deriv (augend exp) var)))
+        ((product? exp)
+         (make-sum
+           (make-product (multiplier exp)
+                         (deriv (multiplicand exp) var))
+           (make-product (deriv (multiplier exp) var)
+                         (multiplicand exp))))
+        <more rules can be added here>
+        (else (error "unknown expression type -- DERIV" exp))))
+```
+
+We can regard this program as performing a dispatch on the type of the expression to be differentiated. 
+
+In this situation the "type tag'' of the datum is the **algebraic operator symbol (such as `+`) and the operation being performed is `deriv`.** 
+
+We can transform this program into data-directed style by rewriting the basic derivative procedure as
+
+如果我们将 这个程序看成 是对微分的表达式的 分派呢？
+
+即根据表达式不同的类型，进行不同的操作。
+
+重写过程。
+
+一个表达式的选择器：
+
+（1）运算符
+
+（2）操作数
+
+本质就是对一个表达式求偏导，但是每个表达式的求偏导的具体实现不同，但是对于
+
+sum、product 和 exponentiation 而言，都是 () op () 的形式，即一个 operator 和 多个 operands
+
+那么对于一个表达式而言， 比如 sum 表达式，make-sum 、 sum? 、addend  和 augend 就都是 内部的过程。
+
+deriv 就是外部过程。
+
+operation-and-type table：
+
+|       | sum    | product | exponentiation |
+| ----- | ------ | ------- | -------------- |
+| deriv | ？？？ | ？？？  | ？？？         |
+
+```lisp
+(define (deriv exp var)  
+    (cond ((number? exp) 0)     
+        ((variable? exp) (if (same-variable? exp var) 1 0))     
+        (else ((get 'deriv (operator exp)) (operands exp)                   
+                                           var))))
+(define (operator exp) (car exp))
+(define (operands exp) (cdr exp))
+```
+
+a. Explain what was done above. 
+
+Why can't we assimilate the predicates `number?` and `same-variable?` into the data-directed dispatch?
+
+b. **Write the procedures for derivatives of sums and products**, and the auxiliary code required to **install them in the table used by the program above.**
+
+c. Choose any additional differentiation rule that you like, such as the one for **exponents** (exercise 2.56), and install it in this data-directed system.
+
+d. In this simple algebraic manipulator the type of an expression **is the algebraic operator that binds it together.** Suppose, however, we indexed the procedures in the opposite way, so that the dispatch line in `deriv` looked like
+
+```
+((get (operator exp) 'deriv) (operands exp) var)
+```
+
+What corresponding changes to the derivative system are required?
+
+（1）解释上面新的过程，为什么不能将 number? same-variable? 放入 data-directed dispatch?
+
+**主要原因就是不需要指派，number? 和 same-variable? 都没有运算符，判断逻辑不需要指派。**
+
+（2）写出加法和乘法的求导表达式，并在程序的表格中install 那些辅助代码。
+
+（3）添加求幂的导数表达式。
+
+（4）是否可以将
+
+```lisp
+((get 'deriv (operator exp)) (operands exp) var))
+```
+
+修改成 
+
+```lisp
+((get (operator exp) 'deriv) (operands exp) var)
+```
+
+？
+
+这个似乎是将table的行和列互换了。
+
+在所有get 和 put的地方将行和列互换即可。
+
+
+
+
+
+没有DrRacket中没有 put 和 get？
+
+下面是补充代码，之后会介绍。
+
+```lisp
+; 2d table 
+; a global table
+(define (make-table) (list '*table*))
+(define *table* (make-table)) 
+; put and get 
+(define (put op type item)
+  (define (insert2! key-1 key-2 value table) 
+    (let ((subtable (assoc key-1 (cdr table)))) 
+      (if subtable 
+          ; subtable exist 
+          (let ((record (assoc key-2 (cdr subtable)))) 
+            (if record 
+                (set-cdr! record value) ; modify record 
+                (set-cdr! subtable 
+                          (cons (cons key-2 value) (cdr subtable))) ; add record 
+                ) 
+            ) 
+          ; subtable doesn't exist, insert a subtable 
+          (set-cdr! table 
+                    (cons (list key-1 (cons key-2 value)) ; inner subtable 
+                          (cdr table)) 
+                    ) 
+          ) 
+      ) 
+    ) 
+  (insert2! op type item *table*)) 
+(define (get op type)
+  (define (lookup2 key-1 key-2 table) 
+    (let ((subtable (assoc key-1 (cdr table)))) 
+      (if subtable 
+          (let ((record (assoc key-2 (cdr subtable)))) 
+            (if record 
+                (cdr record) 
+                #f 
+                ) 
+            ) 
+          #f 
+          ) 
+      ) 
+    ) 
+  (lookup2 op type *table*)) 
+```
+
+
+
+可以不考虑链式法则。
+
+别忘记：
+
+```lisp
+(install-sum-package)
+(install-product-package)
+(install-exponentiation-package)
+```
+
+别忘记将 make-sum 和 make-product 共享：
+
+```lisp
+(define (make-sum a1 a2 . an) 
+  (apply (get 'make-sum '+) (append (list a1 a2) an))) 
+(define (make-product a1 a2 . an) 
+  (apply (get 'make-product '*) (append (list a1 a2) an))) 
+```
+
+
+
+
+
+#### **Exercise 2.74.** 
+
+Insatiable Enterprises, Inc., is a highly decentralized conglomerate company consisting of a large number of independent divisions located all over the world. 
+
+The company's computer **facilities have just been interconnected by means of a clever network-interfacing scheme that makes the entire network appear to any user to be a single computer.** 
+
+使整个网络在任何用户看来都像是一台计算机。
+
+Insatiable's president, in her first attempt to exploit the ability of the network to extract administrative information from division files, is dismayed to discover that, **although all the division files have been implemented as data structures in Scheme, the particular data structure used varies from division to division.** 
+
+尽管所有的部门文件都已在Scheme中实现为数据结构，**但所使用的特定数据结构因部门而异。**
+
+A meeting of division managers is hastily called to search for a strategy to integrate the files that **will satisfy headquarters' needs while preserving the existing autonomy of the divisions.**
+
+既能满足总部的需要，又能保持部门现有的自主权。
+
+Show how such a strategy can be implemented with data-directed programming. 
+
+As an example, **suppose that each division's personnel records consist of a single file, which contains a set of records keyed on employees' names.** 
+
+每个部门的人事记录一个文件组成：
+
+包含一组以员工名字位key 记录。
+
+
+
+The structure of the set varies from division to division. 
+
+Furthermore, each employee's record is itself a set (structured differently from division to division) that contains information keyed under identifiers such as `address` and `salary`. 
+
+address 和 salary 等是记录的关键信息。
+
+
+
+In particular:
+
+a. Implement for headquarters a `get-record` procedure that retrieves a specified employee's record from a specified personnel file. The procedure should be applicable to any division's file. **Explain how the individual divisions' files should be structured. In particular, what type information must be supplied?**
+
+b. Implement for headquarters a `get-salary` procedure that returns the salary information from a given employee's record from any division's personnel file. **How should the record be structured in order to make this operation work?**
+
+c. Implement for headquarters a `find-employee-record` procedure. This should search all the divisions' files for the record of a given employee and return the record. **Assume that this procedure takes as arguments an employee's name and a list of all the divisions' files.**
+
+d. When **Insatiable takes over a new company**, what changes must be made in order to **incorporate the new personnel information into the central system**?
+
+（1）实现 get-record
+
+（2）实现 get-salary
+
+（3）实现 find-employee-record
+
+（4）如果添加一个新的员工信息到系统，需要进行哪些修改？
+
+
+
+加设有三个部门，分别有三个表，每个表的表项和表的数据结构如下：
+
+- 部门 A：**id + name + salary + age**，unordered list
+
+(list id name salary age)
+
+- 部门 B：**id + name + salary + age + address**，unordered list
+
+(list id (list name salary age) address)
+
+- 部门 C：**id + name + salary + work-year**，binary tree
+
+(list id (list name (list salary work-year)))
+
+
+
+新添加一个员工只需要修改 部门的信息表即可。
+
+除非说需要我们写数据库的添加接口，但是我想是不需要的。
+
+
+
+#### **Exercise 2.75.** 
+
+Implement the constructor `make-from-mag-ang` in message-passing style. This procedure should be analogous to the `make-from-real-imag` procedure given above.
+
+使用message passing 的方式实现 make-from-real-imag
+
+
+
+
+
+#### **Exercise 2.76.** 
+
+As a large system with generic operations evolves, new types of data objects or new operations may be needed. 
+
+For each of the three strategies -- generic operations with **explicit dispatch, data-directed style, and message-passing-style** -- describe the changes that must be made to a system in order to add new types or new operations. 
+
+Which organization would be most appropriate for a system in which new types must often be added? Which would be most appropriate for a system in which new operations must often be added?
+
+**泛型系统的设计到底是选择 data-directed 还是 message passing ？**
+
+- 对于一个经常添加新操作的系统，哪一种方法最合适？
+- 对于一个经常添加新数据表示的系统，哪一种方法最合适？
+
+
+
+一个人负责一个数据表示的所有过程的编写。
+
+一个人负责对于所有数据类型的一个过程的编写。
+
+
+

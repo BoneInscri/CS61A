@@ -32,6 +32,14 @@
   )
   (car (partial-tree elements (length elements))))
 
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((= x (entry set)) true)
+        ((< x (entry set))
+         (element-of-set? x (left-branch set)))
+        ((> x (entry set))
+         (element-of-set? x (right-branch set)))))
+
 (define records (list->tree
                  (list
                  (list 1 2001 1 1)

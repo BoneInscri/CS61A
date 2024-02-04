@@ -132,8 +132,7 @@
                         (multiplicand exp)))); 被乘数
         ((sum? exp); 如果表达式是求和表达式?
          (make-sum (deriv (addend exp) var); 加数
-                   (deriv (augend exp) var))
-         ); 被加数
+                   (deriv (augend exp) var))); 被加数
         (else
          (error "unknown expression type -- DERIV" exp))
         ))
