@@ -2904,9 +2904,13 @@ d. When **Insatiable takes over a new company**, what changes must be made in or
 
 #### **Exercise 2.75.** 
 
-Implement the constructor `make-from-mag-ang` in message-passing style. This procedure should be analogous to the `make-from-real-imag` procedure given above.
+Implement the constructor `make-from-mag-ang` in message-passing style. 
 
-使用message passing 的方式实现 make-from-real-imag
+This procedure should be analogous to the `make-from-real-imag` procedure given above.
+
+使用message passing 的方式实现 make-from-real-mag
+
+
 
 
 
@@ -2914,11 +2918,13 @@ Implement the constructor `make-from-mag-ang` in message-passing style. This pro
 
 #### **Exercise 2.76.** 
 
-As a large system with generic operations evolves, new types of data objects or new operations may be needed. 
+As a large system with generic operations evolves, **new types of data objects or new operations** may be needed. 
 
 For each of the three strategies -- generic operations with **explicit dispatch, data-directed style, and message-passing-style** -- describe the changes that must be made to a system in order to add new types or new operations. 
 
-Which organization would be most appropriate for a system in which new types must often be added? Which would be most appropriate for a system in which new operations must often be added?
+Which organization would be most appropriate for a system in which **new types** must often be added? 
+
+Which would be most appropriate for a system in which **new operations** must often be added?
 
 **泛型系统的设计到底是选择 data-directed 还是 message passing ？**
 
@@ -2933,3 +2939,20 @@ Which organization would be most appropriate for a system in which new types mus
 
 
 
+message passing:
+
+**消息传递**允许在不更改已经编写的代码的情况**下添加新类型**
+
+data-directed:
+
+
+
+**数据导向**的方法允许我们添加**具有相应操作的新类型**，
+
+也可以通过在调度表中添加新条目来为**现有类型添加新操作**
+
+
+
+如果是添加过程多，选meessage passing
+
+如果是添加数据类型多，选data
