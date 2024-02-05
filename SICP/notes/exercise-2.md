@@ -3023,6 +3023,52 @@ That is to say, the system should work as before except that ordinary numbers **
 
 
 
+也就是说现在使用scheme的普通数字类型，需要用make-scheme-number，**添加一个没有必要的tag，看如何修改代码让这个tag不需要添加也可以运行。**
+
+
+
+加一个特判就可以了：
+
+```lisp
+(define (type-tag datum)
+  (cond ((pair? datum) (car datum))
+        ((number? datum) 'scheme-number)
+        (else
+         (error "Bad tagged datum -- TYPE-TAG" datum))
+        ))
+(define (contents datum)
+  (cond ((pair? datum) (cdr datum))
+        ((number? datum) datum)
+        (else
+         (error "Bad tagged datum -- CONTENTS" datum))
+        )
+  )
+; scheme-number
+(define (install-scheme-number-package) 
+  (put 'add '(scheme-number scheme-number)
+       (lambda (x y) (+ x y))
+       ;(lambda (x y) (tag (+ x y)))
+       )
+  (put 'sub '(scheme-number scheme-number)
+       (lambda (x y) (- x y))
+       ;(lambda (x y) (tag (- x y)))
+       )
+  (put 'mul '(scheme-number scheme-number)
+       (lambda (x y) (* x y))
+       ;(lambda (x y) (tag (* x y)))
+       )
+  (put 'div '(scheme-number scheme-number)
+       (lambda (x y) (/ x y))
+       ;(lambda (x y) (tag (/ x y)))
+       )
+  (put 'make 'scheme-number
+       (lambda (x) x)
+       ;(lambda (x) (tag x)))
+       ))
+```
+
+
+
 #### **Exercise 2.79.** 
 
 Define a generic equality predicate `equ?` that tests the equality of two numbers, and install it in the generic arithmetic package. 
@@ -3038,6 +3084,47 @@ This operation should work for ordinary numbers, rational numbers, and complex n
 Define a generic predicate `=zero?` that tests if its argument is zero, and install it in the generic arithmetic package. This operation should work for ordinary numbers, rational numbers, and complex numbers.
 
 添加新的泛型操作，=zero?，测试参数是否为0。
+
+
+
+#### **Exercise 2.81.** 
+
+Louis Reasoner has noticed that `apply-generic` may try to coerce the arguments to each other's type even if they already have the same type. 
+
+Therefore, he reasons, we need to put procedures in the coercion table to "coerce" arguments of each type to their own type. 
+
+For example, in addition to the `scheme-number->complex` coercion shown above, he would do:
+
+```lisp
+(define (scheme-number->scheme-number n) n)
+(define (complex->complex z) z)
+(put-coercion 'scheme-number 'scheme-number
+              scheme-number->scheme-number)
+(put-coercion 'complex 'complex complex->complex)
+```
+
+a. With Louis's coercion procedures installed, what happens if `apply-generic` is called with two arguments of type `scheme-number` or two arguments of type `complex` for an operation that is not found in the table for those types? 
+
+For example, assume that we've defined a generic exponentiation operation:
+
+```lisp
+(define (exp x y) (apply-generic 'exp x y))
+```
+
+and have put a procedure for exponentiation in the Scheme-number package but not in any other package:
+
+```lisp
+;; following added to Scheme-number package
+(put 'exp '(scheme-number scheme-number)
+     (lambda (x y) (tag (expt x y)))) 
+; using primitive expt
+```
+
+What happens if we call `exp` with two complex numbers as arguments?
+
+b. Is Louis correct that something had to be done about coercion with arguments of the same type, or does `apply-generic` work correctly as is?
+
+c. Modify `apply-generic` so that it doesn't try coercion if the two arguments have the same type.
 
 
 
