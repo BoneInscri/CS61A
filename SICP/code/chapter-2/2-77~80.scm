@@ -75,6 +75,7 @@
 (define (mul x y) (apply-generic 'mul x y))
 (define (div x y) (apply-generic 'div x y))
 (define (equ? x y) (apply-generic 'equ? x y))
+(define (=zero? x) (apply-generic '=zero? x))
  
 ; scheme-number
 (define (install-scheme-number-package) 
@@ -97,6 +98,9 @@
   (put 'equ? '(scheme-number scheme-number)
        (lambda (x y) (= x y))
        )
+  (put '=zero? '(scheme-number)
+       (lambda (x) (= x 0))
+       )
   (put 'make 'scheme-number
        (lambda (x) x)
        ;(lambda (x) (tag x)))
@@ -112,6 +116,8 @@
   (define (numer x) (car x))
   (define (denom x) (cdr x))
   (define (make-rat n d)
+    (if (= d 0)
+        (error "denom can't be 0"))
     (let ((g (gcd n d)))
       (cons (/ n g) (/ d g))))
   (define (add-rat x y)
@@ -131,6 +137,8 @@
   (define (equ?-rat x y)
     (and (= (numer x) (numer y))
          (= (denom x) (denom y))))
+  (define (=zero?-rat x)
+    (= (numer x) 0))
   ;; interface to rest of the system
   (define (tag x) (attach-tag 'rational x))
   (put 'add '(rational rational)
@@ -143,7 +151,8 @@
        (lambda (x y) (tag (div-rat x y))))
   (put 'equ? '(rational rational)
        (lambda (x y) (equ?-rat x y)))
-
+  (put '=zero? '(rational)
+       (lambda (x) (=zero?-rat x)))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d)))))
 (install-rational-package)
@@ -227,13 +236,15 @@
   (define (equ?-complex z1 z2)
     (and (= (real-part z1) (real-part z2))
          (= (imag-part z1) (imag-part z2))))
+  (define (=zero?-complex z1)
+    (and (= (real-part z1) 0)
+         (= (imag-part z1) 0)))
   ;; interface to rest of the system
   (define (tag z) (attach-tag 'complex z))
   (put 'real-part '(complex) real-part)
   (put 'imag-part '(complex) imag-part)
   (put 'magnitude '(complex) magnitude)
   (put 'angle '(complex) angle)
-  
   (put 'add '(complex complex)
        (lambda (z1 z2) (tag (add-complex z1 z2))))
   (put 'sub '(complex complex)
@@ -244,6 +255,8 @@
        (lambda (z1 z2) (tag (div-complex z1 z2))))
   (put 'equ? '(complex complex)
        (lambda (z1 z2) (equ?-complex z1 z2)))
+  (put '=zero? '(complex)
+       (lambda (z1) (=zero?-complex z1)))
   (put 'make-from-real-imag 'complex
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'complex
@@ -264,12 +277,16 @@
 (define n1 (make-scheme-number 2))
 (define n2 (make-scheme-number 2))
 (define n3 (make-scheme-number 3))
+(define n4 (make-scheme-number 0))
 (define r1 (make-rational 2 3))
 (define r2 (make-rational 4 6))
 (define r3 (make-rational 1 3))
+(define r4 (make-rational 0 4))
+;(define r5 (make-rational 4 0))
 (define z1 (make-complex-from-mag-ang 3 40))
 (define z2 (make-complex-from-real-imag 3 4))
 (define z3 (make-complex-from-real-imag 3 4))
+(define z4 (make-complex-from-real-imag 0 0))
 
 (equ? n1 n2)
 (equ? n2 n3)
@@ -277,3 +294,11 @@
 (equ? r2 r3)
 (equ? z1 z2)
 (equ? z2 z3)
+
+(=zero? n4)
+(=zero? r4)
+(=zero? z4)
+
+(=zero? n3)
+(=zero? r3)
+(=zero? z3)

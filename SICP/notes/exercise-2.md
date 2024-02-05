@@ -3081,7 +3081,7 @@ This operation should work for ordinary numbers, rational numbers, and complex n
 
 #### **Exercise 2.80.** 
 
-Define a generic predicate `=zero?` that tests if its argument is zero, and install it in the generic arithmetic package. This operation should work for ordinary numbers, rational numbers, and complex numbers.
+Define a generic predicate `=zero?` that tests if its argument is zero, and install it in the generic arithmetic package. This operation should work for **ordinary numbers, rational numbers, and complex numbers.**
 
 添加新的泛型操作，=zero?，测试参数是否为0。
 
