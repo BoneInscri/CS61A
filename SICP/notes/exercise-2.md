@@ -2945,14 +2945,99 @@ message passing:
 
 data-directed:
 
-
-
 **数据导向**的方法允许我们添加**具有相应操作的新类型**，
 
 也可以通过在调度表中添加新条目来为**现有类型添加新操作**
 
 
 
-如果是添加过程多，选meessage passing
+- 如果是添加过程多，选meessage passing
+- 如果是添加数据类型多，选data-directed
 
-如果是添加数据类型多，选data
+
+
+#### **Exercise 2.77.** 
+
+Louis Reasoner tries to evaluate the expression `(magnitude z)` where `z` is the object shown in figure 2.24. 
+
+To his surprise, instead of the answer 5 he gets an error message from `apply-generic`, **saying there is no method for the operation `magnitude` on the types `(complex)`.** 
+
+![image-20240205121102323](exercise-2.assets/image-20240205121102323.png)
+
+He shows this interaction to Alyssa P. Hacker, who says **"The problem is that the complex-number selectors were never defined for `complex` numbers, just for `polar` and `rectangular` numbers. "** 
+
+ All you have to do to make this work is add the following to the `complex` package:
+
+```lisp
+(put 'real-part '(complex) real-part)
+(put 'imag-part '(complex) imag-part)
+(put 'magnitude '(complex) magnitude)
+(put 'angle '(complex) angle)
+```
+
+Describe in detail why this works. 
+
+As an example, **trace through all the procedures called in evaluating the expression `(magnitude z)` where `z` is the object shown in figure 2.24.** 
+
+In particular, how many times is `apply-generic` invoked? 
+
+What procedure is dispatched to in each case?
+
+
+
+**（1）修改代码，让报错消失**
+
+**（2）跑了多少次 apply-generic？**
+
+2次
+
+**（3）每次指派到哪个过程？**
+
+先是complex 对应的过程，然后是complex内部的polar-package中的magnitude
+
+就是两次指派，两次都是通过 apply-generic 完成的，
+
+第一次是找到 tag 为 complex 的过程，第二次是找到 tag 为 polar 的过程。
+
+
+
+
+
+#### **Exercise 2.78.** 
+
+The internal procedures in the `scheme-number` package are essentially nothing more than calls to the primitive procedures `+`, `-`, etc. 
+
+It was not possible to use the primitives of the language directly because our type-tag system requires that each data object have a type attached to it. 
+
+In fact, however, all Lisp implementations do have a type system, which they use internally.
+
+**Primitive predicates such as `symbol?` and `number?` determine whether data objects have particular types.** 
+
+Modify the definitions of `type-tag`, `contents`, and `attach-tag` from section 2.4.2 so that our generic system takes advantage of Scheme's internal type system. 
+
+That is to say, the system should work as before except that ordinary numbers **should be represented simply as Scheme numbers rather than as pairs whose `car` is the symbol `scheme-number`.**
+
+所有Lisp实现都有一个类型系统，它们在内部使用。
+
+修改 type-tag、contents和attach-tag，让sheme-number 不需要加tag？
+
+
+
+#### **Exercise 2.79.** 
+
+Define a generic equality predicate `equ?` that tests the equality of two numbers, and install it in the generic arithmetic package. 
+
+This operation should work for ordinary numbers, rational numbers, and complex numbers.
+
+添加一个新的泛型操作，equ?，普通的数字，复数和有理数都可以运算。
+
+
+
+#### **Exercise 2.80.** 
+
+Define a generic predicate `=zero?` that tests if its argument is zero, and install it in the generic arithmetic package. This operation should work for ordinary numbers, rational numbers, and complex numbers.
+
+添加新的泛型操作，=zero?，测试参数是否为0。
+
+
+
