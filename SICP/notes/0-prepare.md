@@ -14,8 +14,32 @@ https://stackoverflow.com/questions/49183001/how-can-i-run-scheme-on-visual-stud
 
 https://blog.csdn.net/weixin_40827685/article/details/109751129
 
-- **sudo apt-get install mit-scheme**
-- sudo apt install racket
+- sudo apt-get install mit-scheme
+- **sudo apt install racket**
+
+
+
+使用DrRacket ！
+
+
+
+开启自动括号
+
+![image-20240213180559087](0-prepare.assets/image-20240213180559087.png)
+
+显示代码行数
+
+
+
+
+
+记得安装 sicp 的package
+
+https://zhuanlan.zhihu.com/p/37056659
+
+https://github.com/sicp-lang/sicp
+
+
 
 
 
@@ -40,14 +64,6 @@ exercise-answer
 http://community.schemewiki.org/?sicp-solutions
 
 https://sicp-solutions.net/
-
-
-
-记得安装 sicp 的package
-
-https://zhuanlan.zhihu.com/p/37056659
-
-https://github.com/sicp-lang/sicp
 
 
 

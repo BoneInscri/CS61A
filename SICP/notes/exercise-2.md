@@ -3103,7 +3103,13 @@ For example, in addition to the `scheme-number->complex` coercion shown above, h
 (put-coercion 'complex 'complex complex->complex)
 ```
 
-a. With Louis's coercion procedures installed, what happens if `apply-generic` is called with two arguments of type `scheme-number` or two arguments of type `complex` for an operation that is not found in the table for those types? 
+自身的类型进行转化：
+
+scheme-number -> scheme-number
+
+complex -> complex
+
+a. With Louis's coercion procedures installed, **what happens if `apply-generic` is called with two arguments of type `scheme-number` or two arguments of type `complex` for an operation that is not found in the table for those types?** 
 
 For example, assume that we've defined a generic exponentiation operation:
 
@@ -3120,11 +3126,113 @@ and have put a procedure for exponentiation in the Scheme-number package but not
 ; using primitive expt
 ```
 
-What happens if we call `exp` with two complex numbers as arguments?
+**What happens if we call `exp` with two complex numbers as arguments?**
 
 b. Is Louis correct that something had to be done about coercion with arguments of the same type, or does `apply-generic` work correctly as is?
 
 c. Modify `apply-generic` so that it doesn't try coercion if the two arguments have the same type.
+
+**（1）如果没有设置自身类型转换会发生什么？**
+
+**（2）如果我们将两个complex 作为参数传给 exp 会发生什么？**
+
+**（3）需要对相同的类型进行强制转化吗？**
+
+**（4）修改apply-generic，如果两个操作数的类型相同，则不用强制类型转化。**
+
+如果设置了自身类型转化，且某个类型没有在类型操作表中设置过程，
+
+那么程序会一直调用apply-generic，然后就死循环了。
+
+
+
+三
+
+
+
+
+
+
+
+#### **Exercise 2.82.** 
+
+Show how to generalize `apply-generic` to handle coercion in the general case of multiple arguments. 
+
+One strategy is to attempt to **coerce all the arguments to the type of the first argument, then to the type of the second argument, and so on.** 
+
+Give an example of a situation where this strategy (and likewise the two-argument version given above) is not sufficiently general. 
+
+(Hint: Consider the case where **there are some suitable mixed-type operations present in the table** that will not be tried.)
+
+**如何处理多个参数的强制类型转化？**
+
+
+
+#### **Exercise 2.83.** 
+
+Suppose you are designing a generic arithmetic system for dealing with the tower of types shown in figure 2.25: integer, rational, real, complex. 
+
+For each type (except complex), **design a procedure that raises objects of that type one level in the tower**. Show how to install a generic `raise` operation that will work for each type (except complex).
+
+**实现 raise 的过程，且具有通用性**
+
+
+
+#### **Exercise 2.84.** 
+
+Using the `raise` operation of exercise 2.83, modify the `apply-generic` procedure so that **it coerces its arguments to have the same type by the method of successive raising, as discussed in this section.** 
+
+**You will need to devise a way to test which of two types is higher in the tower.** 
+
+Do this in a manner that is "compatible'' with the rest of the system and will not lead to problems in adding new levels to the tower.
+
+**使用 raise，修改apply-generic，完成参数的强制类型转化。**
+
+
+
+#### **Exercise 2.85.** 
+
+This section mentioned a method for "simplifying'' a data object by lowering it in the tower of types as far as possible.
+
+Design a procedure `drop` that accomplishes this for the tower described in exercise 2.83. **The key is to decide, in some general way, whether an object can be lowered.** 
+
+For example, the complex number 1.5 + 0*i* can be lowered as far as `real`, the complex number 1 + 0*i* can be lowered as far as `integer`, **and the complex number 2 + 3*i* cannot be lowered at all.** 
+
+Here is a plan for determining whether an object can be lowered: **Begin by defining a generic operation `project` that "pushes'' an object down in the tower.** 
+
+For example, projecting a complex number would involve **throwing away the imaginary part.** 
+
+Then a number can be dropped if, **when we `project` it and `raise` the result back to the type we started with, we end up with something equal to what we started with.** 
+
+Show how to implement this idea in detail, by writing a `drop` procedure that drops an object as far as possible. 
+
+You will need to design the various projection operations and install `project` as a generic operation in the system. 
+
+You will also need to make use of a generic equality predicate, such as described in exercise 2.79. Finally, use `drop` to rewrite `apply-generic` from exercise 2.84 so that it ``simplifies'' its answers.
+
+
+
+**（1）可以使用round，找到实数的下取整。**
+
+**（2）实现drop，完成数据类型的简化。**
+
+**（3）实现project。**
+
+**（4）使用实现的drop修改apply-generic，完成数据的简化。**
+
+
+
+
+
+#### **Exercise 2.86.** 
+
+Suppose we want to handle complex numbers whose real parts, imaginary parts, magnitudes, and angles can be either ordinary numbers, rational numbers, or other numbers we might wish to add to the system. 
+
+Describe and implement the changes to the system needed to accommodate this. 
+
+You will have to define operations such a**s `sine` and `cosine` that are generic over ordinary numbers and rational numbers.**
+
+如何实现让复数的**实部和虚部可以为任意类型的非复数类型的数字？**
 
 
 
