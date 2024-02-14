@@ -3193,6 +3193,13 @@ For each type (except complex), **design a procedure that raises objects of that
 
 
 
+这里多了一个real：
+
+```lisp
+ (put 'raise '(rational) 
+          (lambda (x) (make-real (* 1.0 (/ (numer x) (denom x)))))) 
+```
+
 
 
 
@@ -3245,13 +3252,15 @@ You will also need to make use of a generic equality predicate, such as describe
 
 #### **Exercise 2.86.** 
 
-Suppose we want to handle complex numbers whose real parts, imaginary parts, magnitudes, and angles can be either ordinary numbers, rational numbers, or other numbers we might wish to add to the system. 
+Suppose we want to handle complex numbers whose real parts, imaginary parts, magnitudes, and angles can be **either ordinary numbers, rational numbers, or other numbers we might wish to add to the system.** 
 
 Describe and implement the changes to the system needed to accommodate this. 
 
-You will have to define operations such a**s `sine` and `cosine` that are generic over ordinary numbers and rational numbers.**
+You will have to define operations such as `sine` and `cosine` that are generic over ordinary numbers and rational numbers.
 
 如何实现让复数的**实部和虚部可以为任意类型的非复数类型的数字？**
+
+
 
 
 

@@ -119,6 +119,7 @@
 (define (=zero? x) (apply-generic '=zero? x))
 (define (exp x y) (apply-generic 'exp x y))
 (define (add-three x y z) (apply-generic 'add-three x y z))
+(define (raise x) (apply-generic 'raise x))
 
 ; scheme-number
 (define (install-scheme-number-package) 
@@ -149,6 +150,9 @@
 
   (put 'add-three '(scheme-number scheme-number scheme-number)
        (lambda (x y z) (+ x y z))
+       )
+  (put 'raise '(scheme-number)
+       (lambda (x) (make-rational x 1))
        )
   
   (put 'make 'scheme-number
@@ -202,6 +206,8 @@
        (lambda (x y) (equ?-rat x y)))
   (put '=zero? '(rational)
        (lambda (x) (=zero?-rat x)))
+  (put 'raise '(rational)
+       (lambda (x) (make-complex-from-real-imag x 0)))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d)))))
 (install-rational-package)
@@ -349,4 +355,9 @@
 ;(exp z1 z2)
 
 ;(add-three n1 n2 n3)
-(add-three n1 z2 z1)
+;(add-three n1 z2 z1)
+(raise n1)
+(raise r1)
+;(raise z1)
+
+;(define z3 (make-complex-from-real-imag n1 r1))
