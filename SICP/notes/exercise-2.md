@@ -3146,14 +3146,6 @@ c. Modify `apply-generic` so that it doesn't try coercion if the two arguments h
 
 
 
-三
-
-
-
-
-
-
-
 #### **Exercise 2.82.** 
 
 Show how to generalize `apply-generic` to handle coercion in the general case of multiple arguments. 
@@ -3168,13 +3160,40 @@ Give an example of a situation where this strategy (and likewise the two-argumen
 
 
 
+（1）将参数 2 3 4 ... n 尝试转化为第一个参数的类型
+
+（2）将参数 1 3 4 ... n 尝试转化为第二个参数的类型
+
+（3）....
+
+问题在于这个方法对于混合参数的op不适用，有些时候我们只需要转化部分参数就可以满足op的参数类型需求。
+
+```
+types: A B C 
+registered op: (op some-A some-B some-B) 
+registered coercion: A->B C->B 
+
+Situation: 
+Evaluating (apply-generic op A B C) will only 
+try (op A B C), (op B B B) and fail  
+while we can just coerce C to B to evaluate (op A B B) instead 
+```
+
+
+
+
+
 #### **Exercise 2.83.** 
 
-Suppose you are designing a generic arithmetic system for dealing with the tower of types shown in figure 2.25: integer, rational, real, complex. 
+Suppose you are designing a generic arithmetic system for dealing with the tower of types shown in figure 2.25: **integer, rational, real, complex.** 
 
 For each type (except complex), **design a procedure that raises objects of that type one level in the tower**. Show how to install a generic `raise` operation that will work for each type (except complex).
 
 **实现 raise 的过程，且具有通用性**
+
+
+
+
 
 
 

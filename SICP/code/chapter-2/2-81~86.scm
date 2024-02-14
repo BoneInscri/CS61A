@@ -71,30 +71,44 @@
   )
 
 (define (apply-generic op . args)
-  (let ((type-tags (map type-tag args)))
-    (let ((proc (get op type-tags)))
-      (if proc
-          (apply proc (map contents args))
-          (if (= (length args) 2)
-              (let ((type1 (car type-tags))
-                    (type2 (cadr type-tags))
-                    (a1 (car args))
-                    (a2 (cadr args)))
-                (if (eq? type1 type2)
-                    (error "No method for these types"
-                           (list op type-tags))
-                    (let ((t1->t2 (get-coercion type1 type2))
-                          (t2->t1 (get-coercion type2 type1)))
-                      (cond (t1->t2
-                             (apply-generic op (t1->t2 a1) a2))
-                            (t2->t1
-                             (apply-generic op a1 (t2->t1 a2)))
-                            (else
-                             (error "No method for these types"
-                                    (list op type-tags)))))
-                    ))
-              (error "No method for these types"
-                     (list op type-tags)))))))
+  ; get type-tags of args
+  (define (get-type-tags args)
+    (map type-tag args))
+
+  ; try coercion all args to type of target
+  (define (try-coerce-to target)
+    (map (lambda (x)
+           (let ((coercor (get-coercion (type-tag x) (type-tag target))))
+             (if coercor
+                 (coercor x)
+                 x)
+             )
+           )
+         args)
+    )
+
+  ; iterate each args to try coerce
+  (define (iter-args cur-args)
+    (if (null? cur-args)
+        (error "No method for these types" (list op (get-type-tags args)))
+        (let ((coerced-args (try-coerce-to (car cur-args))))
+          (let ((proc (get op (get-type-tags coerced-args))))
+            (if proc
+                (apply proc (map contents coerced-args))
+                (iter-args (cdr cur-args))
+                )
+            )
+          )
+        )
+    )
+
+  ; try op 
+  (let ((proc (get op (get-type-tags args))))
+    (if proc
+        (apply proc (map contents args))
+        (iter-args args))
+    )
+  )
 
 ; generic ops
 (define (add x y) (apply-generic 'add x y))
@@ -104,7 +118,7 @@
 (define (equ? x y) (apply-generic 'equ? x y))
 (define (=zero? x) (apply-generic '=zero? x))
 (define (exp x y) (apply-generic 'exp x y))
-
+(define (add-three x y z) (apply-generic 'add-three x y z))
 
 ; scheme-number
 (define (install-scheme-number-package) 
@@ -132,6 +146,10 @@
        )
   (put 'exp '(scheme-number scheme-number)
      (lambda (x y) (expt x y)))
+
+  (put 'add-three '(scheme-number scheme-number scheme-number)
+       (lambda (x y z) (+ x y z))
+       )
   
   (put 'make 'scheme-number
        (lambda (x) x)
@@ -270,6 +288,9 @@
   (define (=zero?-complex z1)
     (and (= (real-part z1) 0)
          (= (imag-part z1) 0)))
+  (define (add-three-complex z1 z2 z3)
+    (make-from-real-imag (+ (real-part z1) (real-part z2) (real-part z3))
+                         (+ (imag-part z1) (imag-part z2) (imag-part z3))))
   ;; interface to rest of the system
   (define (tag z) (attach-tag 'complex z))
   (put 'real-part '(complex) real-part)
@@ -291,7 +312,10 @@
   (put 'make-from-real-imag 'complex
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'complex
-       (lambda (r a) (tag (make-from-mag-ang r a)))))
+       (lambda (r a) (tag (make-from-mag-ang r a))))
+  (put 'add-three '(complex complex complex)
+       (lambda (z1 z2 z3) (tag (add-three-complex z1 z2 z3))))
+  )
 (install-complex-package)
 (define (make-complex-from-real-imag x y)
   ((get 'make-from-real-imag 'complex) x y))
@@ -309,16 +333,20 @@
 (define (complex->complex z) z)
 
 (put-coercion 'scheme-number 'complex scheme-number->complex)
-(put-coercion 'scheme-number 'scheme-number
-              scheme-number->scheme-number)
-(put-coercion 'complex 'complex complex->complex)
+;(put-coercion 'scheme-number 'scheme-number
+;              scheme-number->scheme-number)
+;(put-coercion 'complex 'complex complex->complex)
 
 ; test
 (define n1 (make-scheme-number 2))
 (define n2 (make-scheme-number 4))
+(define n3 (make-scheme-number 6))
 (define r1 (make-rational 2 3))
 (define r2 (make-rational 4 5))
 (define z1 (make-complex-from-real-imag 3 4))   
 (define z2 (make-complex-from-real-imag 2 5))
-(exp n1 n2)
+;(exp n1 n2)
 ;(exp z1 z2)
+
+;(add-three n1 n2 n3)
+(add-three n1 z2 z1)
