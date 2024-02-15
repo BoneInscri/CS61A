@@ -3297,6 +3297,36 @@ You will also need to make use of a generic equality predicate, such as describe
 
 
 
+如果 先project，然后raise后得到的类型和原类型相同，那么就可以project。
+
+注意 put 的括号。
+
+```lisp
+(put 'project 'rational
+     (lambda (x) (make-scheme-number (numer x))))
+(put 'project 'real
+     (lambda (x)
+             (define (get-denom-mul10 x)
+                 (if (= (round x) x)
+                     1
+                     (* 10 (get-denom-mul10 (* 10 x)))
+                     )           
+                 )
+             (let ((new-denom (get-denom-mul10 x)))
+                  (make-rational (* x new-denom) new-denom)
+                  )
+             )
+     )
+(put 'project 'complex
+     (lambda (z1)
+             (make-real (real-part z1)))
+     )
+```
+
+
+
+
+
 
 
 #### **Exercise 2.86.** 

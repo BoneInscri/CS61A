@@ -101,7 +101,8 @@
 (define (apply-generic op . args)
   ; get type-tags of args
   (define (get-type-tags args)
-    (map type-tag args))
+    (map type-tag args)
+    )
 
   ; try raise x to target-type
   (define (try-raise x target-type)
@@ -110,13 +111,31 @@
         (try-raise (raise x) target-type))
     )
 
+  ; try drop x to simplest type
+  (define (try-drop x)
+    (if (or (eq? x #t) (eq? x #f))
+        x
+        (let ((project-func (get 'project (type-tag x)))); don't use get-type-tags
+          (if project-func
+              (let ((project-x (project-func (contents x))))
+                (if (eq? project-x #f)
+                    x
+                    (try-drop project-x)
+                    )
+                )
+              x
+              )
+          )
+        )
+    )
+
   ; apply try-raise for args
   (define (raise-args args type-tags)
     (let ((highest-type (highest-type type-tags)))
       (let ((coerced-args (map (lambda (x) (try-raise x highest-type)) args)))
         (let ((proc (get op (get-type-tags coerced-args))))
           (if proc
-              (apply proc (map contents coerced-args))
+              (try-drop (apply proc (map contents coerced-args)))
               (error "No method for these types" (list op type-tags))
               )
           )
@@ -124,10 +143,16 @@
       )
     )
 
+  
   (let ((type-tags (get-type-tags args)))
     (let ((proc (get op type-tags)))
       (if proc
-          (apply proc (map contents args))    
+          (let ((res (apply proc (map contents args))))
+            (if (or (eq? op 'raise) (eq? op 'project))
+                res ; don't drop when op is raise or project
+                (try-drop res)
+                )
+            )
           (raise-args args type-tags)
           )
       )
@@ -144,24 +169,21 @@
 (define (exp x y) (apply-generic 'exp x y))
 (define (add-three x y z) (apply-generic 'add-three x y z))
 (define (raise x) (apply-generic 'raise x))
+(define (project x) (apply-generic 'project x))
 
 ; scheme-number
-(define (install-scheme-number-package) 
+(define (install-scheme-number-package)
   (put 'add '(scheme-number scheme-number)
        (lambda (x y) (+ x y))
-       ;(lambda (x y) (tag (+ x y)))
        )
   (put 'sub '(scheme-number scheme-number)
        (lambda (x y) (- x y))
-       ;(lambda (x y) (tag (- x y)))
        )
   (put 'mul '(scheme-number scheme-number)
        (lambda (x y) (* x y))
-       ;(lambda (x y) (tag (* x y)))
        )
   (put 'div '(scheme-number scheme-number)
        (lambda (x y) (/ x y))
-       ;(lambda (x y) (tag (/ x y)))
        )
   (put 'equ? '(scheme-number scheme-number)
        (lambda (x y) (= x y))
@@ -179,10 +201,8 @@
        (lambda (x)
          (make-rational x 1))
        )
-  
   (put 'make 'scheme-number
        (lambda (x) x)
-       ;(lambda (x) (tag x)))
        )
   )
 (install-scheme-number-package)
@@ -195,10 +215,16 @@
   (define (numer x) (car x))
   (define (denom x) (cdr x))
   (define (make-rat n d)
+    (define s (if (or (and (> 0 n) (> 0 d)) (and (< 0 n) (< 0 d))) 1 -1))
     (if (= d 0)
         (error "denom can't be 0"))
     (let ((g (gcd n d)))
-      (cons (/ n g) (/ d g))))
+      ; ?.0 -> ?
+      (cons (inexact->exact (* s (abs (/ n g))))
+            (inexact->exact (abs (/ d g)))
+            )
+      )
+    )
   (define (add-rat x y)
     (make-rat (+ (* (numer x) (denom y))
                  (* (numer y) (denom x)))
@@ -233,7 +259,14 @@
   (put '=zero? '(rational)
        (lambda (x) (=zero?-rat x)))
   (put 'raise '(rational) 
-       (lambda (x) (make-real (* 1.0 (/ (numer x) (denom x)))))) 
+       (lambda (x) (make-real (* 1.0 (/ (numer x) (denom x))))))
+  (put 'project 'rational
+       (lambda (x)
+         (if (= (denom x) 1)
+             (make-scheme-number (numer x))
+             #f
+             ))
+       )
   
   (put 'add-three '(rational rational rational)
        (lambda (x y z) (tag (add-rat (add-rat x y) z)))
@@ -275,7 +308,19 @@
          (make-complex-from-real-imag x 0)
          )
        )
-  
+  (put 'project 'real
+       (lambda (x)
+         (define (get-denom-mul10 x)
+           (if (= (round x) x)
+               1
+               (* 10 (get-denom-mul10 (* 10 x)))
+               )           
+           )
+         (let ((new-denom (get-denom-mul10 x)))
+           (make-rational (* x new-denom) new-denom)
+           )
+         )
+       )
   (put 'make 'real
        (lambda (x) (tag x)))
   )
@@ -393,6 +438,14 @@
        (lambda (r a) (tag (make-from-mag-ang r a))))
   (put 'add-three '(complex complex complex)
        (lambda (z1 z2 z3) (tag (add-three-complex z1 z2 z3))))
+  (put 'project 'complex
+       (lambda (z1)
+         (if (=zero? (imag-part z1))
+             (real-part z1)
+             #f
+             )
+         )
+       )
   )
 (install-complex-package)
 (define (make-complex-from-real-imag x y)
@@ -419,12 +472,25 @@
 (define n1 (make-scheme-number 5))
 (define n2 (make-scheme-number 4))
 (define n3 (make-scheme-number 6))
-(define r1 (make-rational 2 3))
-(define r2 (make-rational 4 5))
-(define real1 (make-real 4.2))
-(define real2 (make-real 5.2))
-(define z1 (make-complex-from-real-imag 3 4))   
-(define z2 (make-complex-from-real-imag 2 5))
+(define n4 (make-scheme-number -2))
+(define n5 (make-scheme-number 2))
 
-;(add-three n1 n2 n3)
-(add-three n1 z2 z1)
+(define r1 (make-rational -2 3))
+(define r2 (make-rational 4 5))
+(define real1 (make-real 4.0))
+(define real2 (make-real 5.2))
+
+(define z1 (make-complex-from-real-imag real1 n4))   
+(define z2 (make-complex-from-real-imag r1 n4))
+(define z3 (make-complex-from-real-imag r2 real2))
+
+z1
+z2
+z3
+(add-three n1 n2 n3)
+(add-three n1 z1 z2)
+
+(add z2 z3)
+(add z1 z2)
+(add-three z1 z2 z3)
+
