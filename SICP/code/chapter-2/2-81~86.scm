@@ -70,6 +70,10 @@
         )
   )
 
+(define (raise-to-scheme-real x)
+  (contents (try-raise x 'real))
+  )
+
 (define (level type) 
   (cond
     [(eq? type 'mintype) -1]     
@@ -97,18 +101,17 @@
               'mintype
               args))
 
+; try raise x to target-type
+(define (try-raise x target-type)
+  (if (eq? (type-tag x) target-type)
+      x
+      (try-raise (raise x) target-type))
+  )
 
 (define (apply-generic op . args)
   ; get type-tags of args
   (define (get-type-tags args)
     (map type-tag args)
-    )
-
-  ; try raise x to target-type
-  (define (try-raise x target-type)
-    (if (eq? (type-tag x) target-type)
-        x
-        (try-raise (raise x) target-type))
     )
 
   ; try drop x to simplest type
@@ -244,6 +247,9 @@
          (= (denom x) (denom y))))
   (define (=zero?-rat x)
     (= (numer x) 0))
+
+  (define (round-to-two-decimal num)
+    (/ (round (* num 100)) 100))
   ;; interface to rest of the system
   (define (tag x) (attach-tag 'rational x))
   (put 'add '(rational rational)
@@ -259,7 +265,7 @@
   (put '=zero? '(rational)
        (lambda (x) (=zero?-rat x)))
   (put 'raise '(rational) 
-       (lambda (x) (make-real (* 1.0 (/ (numer x) (denom x))))))
+       (lambda (x) (make-real (round-to-two-decimal (* 1.0 (/ (numer x) (denom x))) ))))
   (put 'project 'rational
        (lambda (x)
          (if (= (denom x) 1)
@@ -336,8 +342,9 @@
   ; 直角坐标表示的complex
   (define (install-rectangular-package)
     ;; internal procedures
-    (define (real-part z) (car z))
-    (define (imag-part z) (cdr z))
+    (define (real-part z) (raise-to-scheme-real (car z)))
+    (define (imag-part z) (raise-to-scheme-real (cdr z)))
+    
     (define (make-from-real-imag x y) (cons x y))
     (define (magnitude z)
       (sqrt (add (square (real-part z))
@@ -359,8 +366,9 @@
   ; 极坐标表示的complex
   (define (install-polar-package)
     ;; internal procedures
-    (define (magnitude z) (car z))
-    (define (angle z) (cdr z))
+    (define (magnitude z) (raise-to-scheme-real (car z)))
+    (define (angle z) (raise-to-scheme-real (cdr z)))
+
     (define (make-from-mag-ang r a) (cons r a))
     (define (real-part z)
       (mul (magnitude z) (cos (angle z))))
@@ -494,3 +502,6 @@ z3
 (add z1 z2)
 (add-three z1 z2 z3)
 
+(mul z1 z2)
+
+(div z2 z3)
