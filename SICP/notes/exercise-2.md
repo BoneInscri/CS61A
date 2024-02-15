@@ -3179,13 +3179,56 @@ try (op A B C), (op B B B) and fail
 while we can just coerce C to B to evaluate (op A B B) instead 
 ```
 
+```lisp
+(define (apply-generic op . args)
+  ; get type-tags of args
+  (define (get-type-tags args)
+    (map type-tag args))
+
+  ; try coercion all args to type of target
+  (define (try-coerce-to target)
+    (map (lambda (x)
+           (let ((coercor (get-coercion (type-tag x) (type-tag target))))
+             (if coercor
+                 (coercor x)
+                 x)
+             )
+           )
+         args)
+    )
+
+  ; iterate each args to try coerce
+  (define (iter-args cur-args)
+    (if (null? cur-args)
+        (error "No method for these types" (list op (get-type-tags args)))
+        (let ((coerced-args (try-coerce-to (car cur-args))))
+          (let ((proc (get op (get-type-tags coerced-args))))
+            (if proc
+                (apply proc (map contents coerced-args))
+                (iter-args (cdr cur-args))
+                )
+            )
+          )
+        )
+    )
+  
+  ; try op 
+  (let ((proc (get op (get-type-tags args))))
+    (if proc
+        (apply proc (map contents args))
+        (iter-args args)
+        )
+    )
+  )
+```
+
 
 
 
 
 #### **Exercise 2.83.** 
 
-Suppose you are designing a generic arithmetic system for dealing with the tower of types shown in figure 2.25: **integer, rational, real, complex.** 
+Suppose you are designing a generic arithmetic system for dealing with the tower of typs shown in figure 2.25: **integer, rational, real, complex.** 
 
 For each type (except complex), **design a procedure that raises objects of that type one level in the tower**. Show how to install a generic `raise` operation that will work for each type (except complex).
 
@@ -3213,6 +3256,12 @@ Using the `raise` operation of exercise 2.83, modify the `apply-generic` procedu
 Do this in a manner that is "compatible'' with the rest of the system and will not lead to problems in adding new levels to the tower.
 
 **使用 raise，修改apply-generic，完成参数的强制类型转化。**
+
+
+
+假设是多个参数的过程，那么首先需要找到在类型 tower 中最高的那个，然后将其他的类型不断 raise，直到为这个最高的type。
+
+
 
 
 
@@ -3259,6 +3308,10 @@ Describe and implement the changes to the system needed to accommodate this.
 You will have to define operations such as `sine` and `cosine` that are generic over ordinary numbers and rational numbers.
 
 如何实现让复数的**实部和虚部可以为任意类型的非复数类型的数字？**
+
+
+
+需要修改 complex 的所有 直接操作 real-part 、imaginary part 、magnitudes 和 angles 的部分进行修改，改为“泛型”运算。
 
 
 

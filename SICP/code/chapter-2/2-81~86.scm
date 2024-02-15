@@ -70,43 +70,67 @@
         )
   )
 
+(define (level type) 
+  (cond
+    [(eq? type 'mintype) -1]     
+    [(eq? type 'scheme-number) 0] 
+    [(eq? type 'rational) 1]
+    [(eq? type 'real) 2]
+    [(eq? type 'complex) 3]
+    [(eq? type 'maxtype) 4]
+    [else (error "unknown type" type)]
+    ))
+
+(define (highest-type args)
+  (define (accumulate op initial sequence)
+    (if (null? sequence)
+        initial
+        (op (car sequence)
+            (accumulate op initial (cdr sequence))))
+    )
+  (define (higher-type a b)
+    (if (> (level a) (level b))
+        a
+        b))
+  (accumulate (lambda (a b)
+                (higher-type a b))
+              'mintype
+              args))
+
+
 (define (apply-generic op . args)
   ; get type-tags of args
   (define (get-type-tags args)
     (map type-tag args))
 
-  ; try coercion all args to type of target
-  (define (try-coerce-to target)
-    (map (lambda (x)
-           (let ((coercor (get-coercion (type-tag x) (type-tag target))))
-             (if coercor
-                 (coercor x)
-                 x)
-             )
-           )
-         args)
+  ; try raise x to target-type
+  (define (try-raise x target-type)
+    (if (eq? (type-tag x) target-type)
+        x
+        (try-raise (raise x) target-type))
     )
 
-  ; iterate each args to try coerce
-  (define (iter-args cur-args)
-    (if (null? cur-args)
-        (error "No method for these types" (list op (get-type-tags args)))
-        (let ((coerced-args (try-coerce-to (car cur-args))))
-          (let ((proc (get op (get-type-tags coerced-args))))
-            (if proc
-                (apply proc (map contents coerced-args))
-                (iter-args (cdr cur-args))
-                )
-            )
+  ; apply try-raise for args
+  (define (raise-args args type-tags)
+    (let ((highest-type (highest-type type-tags)))
+      (let ((coerced-args (map (lambda (x) (try-raise x highest-type)) args)))
+        (let ((proc (get op (get-type-tags coerced-args))))
+          (if proc
+              (apply proc (map contents coerced-args))
+              (error "No method for these types" (list op type-tags))
+              )
           )
         )
+      )
     )
 
-  ; try op 
-  (let ((proc (get op (get-type-tags args))))
-    (if proc
-        (apply proc (map contents args))
-        (iter-args args))
+  (let ((type-tags (get-type-tags args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))    
+          (raise-args args type-tags)
+          )
+      )
     )
   )
 
@@ -146,19 +170,21 @@
        (lambda (x) (= x 0))
        )
   (put 'exp '(scheme-number scheme-number)
-     (lambda (x y) (expt x y)))
+       (lambda (x y) (expt x y)))
 
   (put 'add-three '(scheme-number scheme-number scheme-number)
        (lambda (x y z) (+ x y z))
        )
   (put 'raise '(scheme-number)
-       (lambda (x) (make-rational x 1))
+       (lambda (x)
+         (make-rational x 1))
        )
   
   (put 'make 'scheme-number
        (lambda (x) x)
        ;(lambda (x) (tag x)))
-       ))
+       )
+  )
 (install-scheme-number-package)
 (define (make-scheme-number n)
   ((get 'make 'scheme-number) n))
@@ -206,17 +232,62 @@
        (lambda (x y) (equ?-rat x y)))
   (put '=zero? '(rational)
        (lambda (x) (=zero?-rat x)))
-  (put 'raise '(rational)
-       (lambda (x) (make-complex-from-real-imag x 0)))
+  (put 'raise '(rational) 
+       (lambda (x) (make-real (* 1.0 (/ (numer x) (denom x)))))) 
+  
+  (put 'add-three '(rational rational rational)
+       (lambda (x y z) (tag (add-rat (add-rat x y) z)))
+       )
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d)))))
 (install-rational-package)
 (define (make-rational n d)
   ((get 'make 'rational) n d))
 
+(define (install-real-package)
+  (define (tag x) (attach-tag 'real x))
+  (put 'add '(real real)
+       (lambda (x y) (tag (+ x y)))
+       )
+  (put 'sub '(real real)
+       (lambda (x y) (tag (- x y)))
+       )
+  (put 'mul '(real real)
+       (lambda (x y) (tag (* x y)))
+       )
+  (put 'div '(real real)
+       (lambda (x y) (tag (/ x y)))
+       )
+  (put 'equ? '(real real)
+       (lambda (x y) (= x y))
+       )
+  (put '=zero? '(real)
+       (lambda (x) (= x 0))
+       )
+  (put 'exp '(real real)
+       (lambda (x y) (tag (expt x y))))
+
+  (put 'add-three '(real real real)
+       (lambda (x y z) (tag (+ x y z)))
+       )
+  (put 'raise '(real)
+       (lambda (x)
+         (make-complex-from-real-imag x 0)
+         )
+       )
+  
+  (put 'make 'real
+       (lambda (x) (tag x)))
+  )
+  
+
+(install-real-package)
+(define (make-real n)
+  ((get 'make 'real) n))
+
 ; complex number
 (define (install-complex-package)
-  (define (square x) (* x x))
+  (define (square x) (mul x x))
   ; 直角坐标表示的complex
   (define (install-rectangular-package)
     ;; internal procedures
@@ -224,12 +295,12 @@
     (define (imag-part z) (cdr z))
     (define (make-from-real-imag x y) (cons x y))
     (define (magnitude z)
-      (sqrt (+ (square (real-part z))
-               (square (imag-part z)))))
+      (sqrt (add (square (real-part z))
+                 (square (imag-part z)))))
     (define (angle z)
       (atan (imag-part z) (real-part z)))
     (define (make-from-mag-ang r a) 
-      (cons (* r (cos a)) (* r (sin a))))
+      (cons (mul r (cos a)) (mul r (sin a))))
     ;; interface to the rest of the system
     (define (tag x) (attach-tag 'rectangular x))
     (put 'real-part '(rectangular) real-part)
@@ -247,11 +318,11 @@
     (define (angle z) (cdr z))
     (define (make-from-mag-ang r a) (cons r a))
     (define (real-part z)
-      (* (magnitude z) (cos (angle z))))
+      (mul (magnitude z) (cos (angle z))))
     (define (imag-part z)
-      (* (magnitude z) (sin (angle z))))
+      (mul (magnitude z) (sin (angle z))))
     (define (make-from-real-imag x y) 
-      (cons (sqrt (+ (square x) (square y)))
+      (cons (sqrt (add (square x) (square y)))
             (atan y x)))
     ;; interface to the rest of the system
     (define (tag x) (attach-tag 'polar x))
@@ -275,28 +346,29 @@
     ((get 'make-from-real-imag 'rectangular) x y))
   (define (make-from-mag-ang r a)
     ((get 'make-from-mag-ang 'polar) r a))
+  
   ;; internal procedures
   (define (add-complex z1 z2)
-    (make-from-real-imag (+ (real-part z1) (real-part z2))
-                         (+ (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (add (real-part z1) (real-part z2))
+                         (add (imag-part z1) (imag-part z2))))
   (define (sub-complex z1 z2)
-    (make-from-real-imag (- (real-part z1) (real-part z2))
-                         (- (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (sub (real-part z1) (real-part z2))
+                         (sub (imag-part z1) (imag-part z2))))
   (define (mul-complex z1 z2)
-    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
-                       (+ (angle z1) (angle z2))))
+    (make-from-mag-ang (mul (magnitude z1) (magnitude z2))
+                       (add (angle z1) (angle z2))))
   (define (div-complex z1 z2)
-    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
-                       (- (angle z1) (angle z2))))
+    (make-from-mag-ang (div (magnitude z1) (magnitude z2))
+                       (sub (angle z1) (angle z2))))
   (define (equ?-complex z1 z2)
-    (and (= (real-part z1) (real-part z2))
-         (= (imag-part z1) (imag-part z2))))
+    (and (equ? (real-part z1) (real-part z2))
+         (equ? (imag-part z1) (imag-part z2))))
   (define (=zero?-complex z1)
-    (and (= (real-part z1) 0)
-         (= (imag-part z1) 0)))
+    (and (equ? (real-part z1) 0)
+         (equ? (imag-part z1) 0)))
   (define (add-three-complex z1 z2 z3)
-    (make-from-real-imag (+ (real-part z1) (real-part z2) (real-part z3))
-                         (+ (imag-part z1) (imag-part z2) (imag-part z3))))
+    (make-from-real-imag (add-three (real-part z1) (real-part z2) (real-part z3))
+                         (add-three (imag-part z1) (imag-part z2) (imag-part z3))))
   ;; interface to rest of the system
   (define (tag z) (attach-tag 'complex z))
   (put 'real-part '(complex) real-part)
@@ -344,20 +416,15 @@
 ;(put-coercion 'complex 'complex complex->complex)
 
 ; test
-(define n1 (make-scheme-number 2))
+(define n1 (make-scheme-number 5))
 (define n2 (make-scheme-number 4))
 (define n3 (make-scheme-number 6))
 (define r1 (make-rational 2 3))
 (define r2 (make-rational 4 5))
+(define real1 (make-real 4.2))
+(define real2 (make-real 5.2))
 (define z1 (make-complex-from-real-imag 3 4))   
 (define z2 (make-complex-from-real-imag 2 5))
-;(exp n1 n2)
-;(exp z1 z2)
 
 ;(add-three n1 n2 n3)
-;(add-three n1 z2 z1)
-(raise n1)
-(raise r1)
-;(raise z1)
-
-;(define z3 (make-complex-from-real-imag n1 r1))
+(add-three n1 z2 z1)
