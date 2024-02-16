@@ -176,6 +176,7 @@
 (define (add-three x y z) (apply-generic 'add-three x y z))
 (define (raise x) (apply-generic 'raise x))
 (define (project x) (apply-generic 'project x))
+(define (neg x) (apply-generic 'neg x))
 
 ; scheme-number
 (define (install-scheme-number-package)
@@ -206,6 +207,11 @@
   (put 'raise '(scheme-number)
        (lambda (x)
          (make-rational x 1))
+       )
+  (put 'neg '(scheme-number)
+       (lambda (x)
+         (- x)
+         )
        )
   (put 'make 'scheme-number
        (lambda (x) x)
@@ -280,6 +286,11 @@
   (put 'add-three '(rational rational rational)
        (lambda (x y z) (tag (add-rat (add-rat x y) z)))
        )
+  (put 'neg '(rational)
+       (lambda (x)
+         (make-rational (- (numer x)) (denom x))
+         )
+       )
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d)))))
 (install-rational-package)
@@ -328,6 +339,11 @@
          (let ((new-denom (get-denom-mul10 x)))
            (make-rational (* x new-denom) new-denom)
            )
+         )
+       )
+  (put 'neg '(real)
+       (lambda (x)
+         (- x)
          )
        )
   (put 'make 'real
@@ -457,6 +473,11 @@
              )
          )
        )
+  (put 'neg '(complex)
+       (lambda (x)
+         (make-complex-from-real-imag (- (real-part x)) (- (imag-part x)))
+         )
+       )
   )
 (install-complex-package)
 (define (make-complex-from-real-imag x y)
@@ -467,8 +488,6 @@
 (define (imag-part z) (apply-generic 'imag-part z))
 (define (magnitude z) (apply-generic 'magnitude z))
 (define (angle z) (apply-generic 'angle z))
-
-
 
 (define (install-polynomial-package)
   ; internal procedures
@@ -483,10 +502,11 @@
   (define (variable p) (car p))
   (define (term-list p) (cdr p))
   
-  ; representation of terms
+  ; representation of term
   (define (make-term order coeff) (list order coeff))
   (define (order term) (car term))
   (define (coeff term) (cadr term))
+  (define (neg-term term) (make-term (order term) (neg (coeff term))))
 
   ; representation of term lists
   (define (the-empty-termlist) nil)
@@ -561,6 +581,29 @@
       )
     (=zero-term (term-list p1))
     )
+
+  ; neg
+  (define (neg-terms term-list)
+    (if (empty-termlist? term-list)
+        (the-empty-termlist)
+        (let ((t1 (first-term term-list)))
+          (adjoin-term
+           (neg-term t1) (neg-terms (rest-terms term-list)))
+          )
+        )
+    )
+  (define (neg-poly p1)
+    (make-polynomial (variable p1) (neg-terms (term-list p1))))
+
+  ; sub
+  (define (sub-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (add-terms (term-list p1)
+                              (neg-terms (term-list p2))
+                              ))
+        (error "Polys not in same var -- SUB-POLY"
+               (list p1 p2))))
   
   ;; interface to rest of the system
   (define (tag p) (attach-tag 'polynomial p))
@@ -570,6 +613,11 @@
        (lambda (p1 p2) (tag (mul-poly p1 p2))))
   (put '=zero? '(polynomial) 
        (lambda (p1) (=zero?-poly p1)))
+  (put 'neg '(polynomial)
+       (lambda (p1) (neg-poly p1) ))
+  (put 'sub '(polynomial polynomial)
+       (lambda (p1 p2) (tag (sub-poly p1 p2)))
+       )
   
   (put 'make 'polynomial
        (lambda (var terms) (tag (make-poly var terms))))
@@ -580,26 +628,55 @@
   ((get 'make 'polynomial) var terms))
 
 ; test
+(define n0 (make-scheme-number 0))
 (define n1 (make-scheme-number 5))
 (define n2 (make-scheme-number 4))
 (define n3 (make-scheme-number 6))
 (define n4 (make-scheme-number -2))
 (define n5 (make-scheme-number 2))
 
+
+(define r0 (make-rational 0 2))
 (define r1 (make-rational -2 3))
 (define r2 (make-rational 4 5))
+(define real0 (make-real 0.0))
 (define real1 (make-real 4.0))
 (define real2 (make-real 5.2))
 
+(define z0 (make-complex-from-real-imag n0 r0))
 (define z1 (make-complex-from-real-imag real1 n4))   
 (define z2 (make-complex-from-real-imag r1 n4))
 (define z3 (make-complex-from-real-imag r2 real2))
 
+(define p0 (make-polynomial 'x '((3 0) (2 0) (0 0))))
 (define p1 (make-polynomial 'x '((1 1)(0 1)))) ; x + 1
 (define p2 (make-polynomial 'x '((3 1)(0 -1)))) ; x^3 - 1
 (define p3 (make-polynomial 'x '((1 1)))) ; x
 (define p4 (make-polynomial 'x '((2 1)(0 -1)))) ; x^2 - 1
 
-(define p5 (make-polynomial 'x '((3 0) (2 2) (0 0))))
+(define p5 (make-polynomial 'x '((3 0) (2 -2) (0 0))))
 
-(=zero? p5)
+(neg p5)
+
+(define p6 (make-polynomial 'x (list (list 4 p1)
+                                     (list 3 n1)
+                                     (list 2 r1)
+                                     (list 1 real1)))
+  )
+
+p6
+(neg p6)
+
+(define p7 (make-polynomial 'x (list (list 4 p0)
+                                     (list 3 n0)
+                                     (list 2 r0)
+                                     (list 1 real0)))
+  )
+(=zero? p7)
+
+(sub p1 p2)
+
+(sub p4 (neg p6))
+(add p4 p6)
+
+(define f1 0.5)

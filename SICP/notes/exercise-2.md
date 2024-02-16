@@ -3377,7 +3377,7 @@ Extend the polynomial system to include subtraction of polynomials.
 
 添加多项式的减法。
 
-添加泛型的取反操作会对实现减法有帮助。
+添加泛型的**取反操作**会对实现减法有帮助。
 
 
 
@@ -3387,7 +3387,7 @@ Define procedures that implement the term-list representation described above as
 
 
 
-实现针对 密集多项式的 构造器、选择器、谓词。
+实现针对 稠密多项式的 **构造器、选择器、谓词**。
 
 
 
