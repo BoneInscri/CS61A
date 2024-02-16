@@ -552,7 +552,7 @@
       (if (empty-termlist? term-list)
           #t
           (let ((first-term (first-term term-list)))
-            (if (= 0 (coeff first-term))
+            (if (=zero? (coeff first-term))
                 (=zero-term (rest-terms term-list))
                 #f
                 )
@@ -568,7 +568,6 @@
        (lambda (p1 p2) (tag (add-poly p1 p2))))
   (put 'mul '(polynomial polynomial) 
        (lambda (p1 p2) (tag (mul-poly p1 p2))))
-
   (put '=zero? '(polynomial) 
        (lambda (p1) (=zero?-poly p1)))
   
