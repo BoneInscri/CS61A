@@ -3345,5 +3345,332 @@ You will have to define operations such as `sine` and `cosine` that are generic 
 
 
 
+#### **Exercise 2.87.** 
+
+Install `=zero?` for polynomials in the generic arithmetic package. 
+
+This will allow `adjoin-term` to work for polynomials with **coefficients that are themselves polynomials.**
+
+
+
+给 多项式 包添加 =zero? 过程。
+
+**那么多项式的系数就可以为多项式了。**
+
+系数可以为0！
+
+```lisp
+(define p5 (make-polynomial 'x '((3 0) (2 0) (0 0))))
+```
+
+
+
+
+
+#### **Exercise 2.88.** 
+
+Extend the polynomial system to include subtraction of polynomials. 
+
+(Hint: You may find it helpful to define a generic **negation** operation.)
+
+
+
+添加多项式的减法。
+
+添加泛型的取反操作会对实现减法有帮助。
+
+
+
+#### **Exercise 2.89.** 
+
+Define procedures that implement the term-list representation described above as appropriate for dense polynomials.
+
+
+
+实现针对 密集多项式的 构造器、选择器、谓词。
+
+
+
+
+
+#### **Exercise 2.90.** 
+
+Suppose we want to have a polynomial system that is efficient for **both sparse and dense polynomials.** 
+
+One way to do this is to **allow both kinds of term-list representations in our system.** 
+
+The situation is analogous to the complex-number example of section 2.4, **where we allowed both rectangular and polar representations.** 
+
+To do this we must distinguish different types of term lists and make the operations on term lists generic. 
+
+Redesign the polynomial system to implement this generalization. 
+
+This is a major effort, not a local change.
+
+
+
+对多项式进行修改：
+
+（1）两个类型同时存在
+
+（2）密集多项式、稀疏多项式
+
+（3）类似 complex 的 极坐标表示 和 直角坐标表示
+
+
+
+
+
+#### **Exercise 2.91.** 
+
+A **univariate** polynomial can be divided by another one to produce a polynomial quotient and a polynomial remainder. 
+
+一个单变量多项式可以除以另一个多项式得到**多项式商和多项式余数。**
+
+For example,
+$$
+\frac{x^{5}-1}{x^{2}-1}=x^{3}+x,\mathrm{remainder}\,x-1
+$$
+多项式的除法，有商，有余数。
+
+商和余数都是多项式。
+
+也就是大除法的模拟。
+
+Division can be performed via **long division.** 
+
+That is, divide the highest-order term of the dividend by the highest-order term of the divisor. 
+
+The result is the **first term of the quotient.** 
+
+Next, **multiply the result by the divisor**, subtract that from the dividend, and produce the rest of the answer **by recursively dividing the difference by the divisor.** 
+
+Stop when the order of the divisor exceeds the order of the dividend and declare the dividend to be the remainder. 
+
+Also, if the dividend ever becomes zero, **return zero as both quotient and remainder.**
+
+We can design a `div-poly` procedure on the model of `add-poly` and `mul-poly`. 
+
+**The procedure checks to see if the two polys have the same variable.** 
+
+If so, `div-poly` strips off the variable and passes the problem to `div-terms`, **which performs the division operation on term lists.** 
+
+`Div-poly` finally **reattaches** the variable to the result supplied by `div-terms`. 
+
+It is convenient to design `div-terms` to compute both the quotient and the remainder of a division.
+
+ `Div-terms` can take two term lists as arguments and return a list of the quotient term list and the remainder term list.
+
+Complete the following definition of `div-terms` by filling in the missing expressions. 
+
+Use this to implement `div-poly`, which takes two polys as arguments and returns a list of the **quotient and remainder polys.**
+
+
+
+（1）仿造 add-poly 和 mul-poly 实现 div-poly
+
+（2）需要先实现  div-terms，然后实现 div-poly
+
+```lisp
+(define (div-terms L1 L2)
+  (if (empty-termlist? L1)
+      (list (the-empty-termlist) (the-empty-termlist))
+      (let ((t1 (first-term L1))
+            (t2 (first-term L2)))
+        (if (> (order t2) (order t1))
+            (list (the-empty-termlist) L1)
+            (let ((new-c (div (coeff t1) (coeff t2)))
+                  (new-o (- (order t1) (order t2))))
+              (let ((rest-of-result
+                     <compute rest of result recursively>
+                     ))
+                <form complete result>
+                ))))))
+```
+
+
+
+#### **Exercise 2.92.** 
+
+By imposing an ordering on variables, extend the polynomial package so that addition and multiplication of polynomials works for polynomials in different variables. 
+
+(This is not easy!)
+
+
+
+对变量**施加排序**，扩展多项式包，**使多项式的加法和乘法适用于不同变量的多项式。**
+
+
+
+
+
+#### **Exercise 2.93.** 
+
+Modify the rational-arithmetic package to use generic operations, but change `make-rat` so that it does not attempt to reduce fractions to lowest terms. 
+
+Test your system by calling `make-rational` on two polynomials to produce a rational function
+
+```lisp
+(define p1 (make-polynomial 'x '((2 1)(0 1))))
+(define p2 (make-polynomial 'x '((3 1)(0 1))))
+(define rf (make-rational p2 p1))
+```
+
+Now add `rf` to itself, using `add`. You will observe that this addition procedure does not reduce fractions to lowest terms.
+
+We can reduce polynomial fractions to lowest terms using the same idea we used with integers: modifying `make-rat` to divide both the numerator and the denominator by their greatest common divisor. 
+
+The notion of "greatest common divisor'' makes sense for polynomials. 
+
+In fact, we can compute the GCD of two polynomials using essentially the same Euclid's Algorithm that works for integers.
+
+The integer version is
+
+```lisp
+(define (gcd a b)
+  (if (= b 0)
+      a
+      (gcd b (remainder a b))))
+```
+
+Using this, we could make the obvious modification to define a GCD operation that works on term lists:
+
+```lisp
+(define (gcd-terms a b)
+  (if (empty-termlist? b)
+      a
+      (gcd-terms b (remainder-terms a b))))
+```
+
+where `remainder-terms` picks out the remainder component of the list returned by the term-list division operation `div-terms` that was implemented in exercise 2.91.
+
+
+
+#### **Exercise 2.94.** 
+
+Using `div-terms`, implement the procedure `remainder-terms` and use this to define `gcd-terms` as above. 
+
+Now write a procedure `gcd-poly` that computes the polynomial GCD of two polys. 
+
+(The procedure should signal an error if the two polys are not in the same variable.) 
+
+Install in the system a generic operation `greatest-common-divisor` that reduces to `gcd-poly` for polynomials and to ordinary `gcd` for ordinary numbers. 
+
+As a test, try
+
+```lisp
+(define p1 (make-polynomial 'x '((4 1) (3 -1) (2 -2) (1 2))))
+(define p2 (make-polynomial 'x '((3 1) (1 -1))))
+(greatest-common-divisor p1 p2)
+```
+
+and check your result by hand.
+
+
+
+
+
+#### **Exercise 2.95.** 
+
+Define *P*1, *P*2, and *P*3 to be the polynomials
+$$
+\begin{array}{rl}{P_{1}:}&{{\mathbf{x}^{2}-2\mathbf{x}+1}}\\\\{P_{2}:}&{11\mathbf{x}^{2}+7}\\\\{P_{3}:}&{13\mathbf{x}+5}\\\end{array}
+$$
+Now define *Q*1 to be the product of *P*1 and *P*2 and *Q*2 to be the product of *P*1 and *P*3, and use `greatest-common-divisor` (exercise 2.94) to compute the GCD of *Q*1 and *Q*2. Note that the answer is not the same as *P*1. 
+
+This example introduces noninteger operations into the computation, causing difficulties with the GCD algorithm. 
+
+To understand what is happening, try tracing `gcd-terms` while computing the GCD or try performing the division by hand.
+
+We can solve the problem exhibited in exercise 2.95 if we use the following modification of the GCD algorithm (which really works only in the case of polynomials with integer coefficients). 
+
+Before performing any polynomial division in the GCD computation, we multiply the dividend by an integer constant factor, chosen to guarantee that no fractions will arise during the division process. 
+
+Our answer will thus differ from the actual GCD by an integer constant factor, but this does not matter in the case of reducing rational functions to lowest terms; the GCD will be used to divide both the numerator and denominator, so the integer constant factor will cancel out.
+
+More precisely, if *P* and *Q* are polynomials, let *O*1 be the order of *P* (i.e., the order of the largest term of *P*) and let *O*2 be the order of *Q*. 
+
+Let *c* be the leading coefficient of *Q*. 
+
+Then it can be shown that, if we multiply *P* by the *integerizing factor* *c*1+*O*1 -*O*2, the resulting polynomial can be divided by *Q* by using the `div-terms` algorithm without introducing any fractions. 
+
+The operation of multiplying the dividend by this constant and then dividing is sometimes called the *pseudodivision* of *P* by *Q*. 
+
+The remainder of the division is called the *pseudoremainder*.
+
+
+
+#### **Exercise 2.96.** 
+
+a.  Implement the procedure `pseudoremainder-terms`, which is just like `remainder-terms` except that it multiplies the dividend by the integerizing factor described above before calling `div-terms`. 
+
+Modify `gcd-terms` to use `pseudoremainder-terms`, and verify that `greatest-common-divisor` now produces an answer with integer coefficients on the example in exercise 2.95.
+
+
+
+b.  The GCD now has integer coefficients, but they are larger than those of *P*1. Modify `gcd-terms` so that it removes common factors from the coefficients of the answer by dividing all the coefficients by their (integer) greatest common divisor.
+
+Thus, here is how to reduce a rational function to lowest terms:
+
+Compute the GCD of the numerator and denominator, using the version of `gcd-terms` from exercise 2.96
+
+When you obtain the GCD, multiply both numerator and denominator by the same integerizing factor before dividing through by the GCD, so that division by the GCD will not introduce any noninteger coefficients. 
+
+As the factor you can use the leading coefficient of the GCD raised to the power 
+
+1 + *O*1 - *O*2, where *O*2 is the order of the GCD and *O*1 is the maximum of the orders of the numerator and denominator. 
+
+This will ensure that dividing the numerator and denominator by the GCD will not introduce any fractions.
+
+The result of this operation will be a numerator and denominator with integer coefficients. 
+
+The coefficients will normally be very large because of all of the integerizing factors, so the last step is to remove the redundant factors by computing the (integer) greatest common divisor of all the coefficients of the numerator and the denominator and dividing through by this factor.
+
+
+
+#### **Exercise 2.97.** 
+
+a. Implement this algorithm as a procedure `reduce-terms` that takes two term lists `n` and `d` as arguments and returns a list `nn`, `dd`, which are `n` and `d` reduced to lowest terms via the algorithm given above. 
+
+Also write a procedure `reduce-poly`, analogous to `add-poly`, that checks to see if the two polys have the same variable. 
+
+If so, `reduce-poly` strips off the variable and passes the problem to `reduce-terms`, then reattaches the variable to the two term lists supplied by `reduce-terms`.
+
+b. Define a procedure analogous to `reduce-terms` that does what the original `make-rat` did for integers:
+
+```lisp
+(define (reduce-integers n d)
+  (let ((g (gcd n d)))
+    (list (/ n g) (/ d g))))
+```
+
+and define `reduce` as a generic operation that calls `apply-generic` to dispatch to either `reduce-poly` (for `polynomial` arguments) or `reduce-integers` (for `scheme-number` arguments). 
+
+You can now easily make the rational-arithmetic package reduce fractions to lowest terms by having `make-rat` call `reduce` before combining the given numerator and denominator to form a rational number. 
+
+The system now handles rational expressions in either integers or polynomials. 
+
+To test your program, try the example at the beginning of this extended exercise:
+
+```lisp
+(define p1 (make-polynomial 'x '((1 1)(0 1))))
+(define p2 (make-polynomial 'x '((3 1)(0 -1))))
+(define p3 (make-polynomial 'x '((1 1))))
+(define p4 (make-polynomial 'x '((2 1)(0 -1))))
+(define rf1 (make-rational p1 p2))
+(define rf2 (make-rational p3 p4))
+(add rf1 rf2)
+```
+
+See if you get the correct answer, correctly reduced to lowest terms.
+
+The GCD computation is at the heart of any system that does operations on rational functions. 
+
+The algorithm used above, although mathematically straightforward, is extremely slow. 
+
+The slowness is due partly to the large number of division operations and partly to the enormous size of the intermediate coefficients generated by the pseudodivisions. 
+
+One of the active areas in the development of algebraic-manipulation systems is the design of better algorithms for computing polynomial GCDs.
+
 
 
