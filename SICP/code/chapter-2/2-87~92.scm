@@ -490,7 +490,6 @@
 (define (angle z) (apply-generic 'angle z))
 
 (define (install-polynomial-package)
-  ; internal procedures
   ; helper
   (define (same-variable? v1 v2)
     (and (variable? v1) (variable? v2) (eq? v1 v2)))
@@ -509,15 +508,78 @@
   (define (neg-term term) (make-term (order term) (neg (coeff term))))
 
   ; representation of term lists
-  (define (the-empty-termlist) nil)
-  (define (first-term term-list) (car term-list))
-  (define (rest-terms term-list) (cdr term-list))
-  (define (adjoin-term term term-list)
-    (if (=zero? (coeff term))
-        term-list
-        (cons term term-list)))
-  (define (empty-termlist? term-list) (null? term-list))
+  (define (empty-termlist? term-list) (null? (cdr term-list)))
+  (define (the-empty-termlist term-list) (attach-tag (type-tag term-list) nil))
+  (define (cons-term term term-list)
+    (cons (car term-list) (cons term (cdr term-list))); consider term-list tag
+    )
+  
+  ; sparse term list
+  (define (install-sparse-term-list-package)
+    (define (first-term term-list) (car term-list))
+    (define (rest-terms term-list) (cdr term-list))
+    (define (adjoin-term term term-list)
+      (if (=zero? (coeff term))
+          term-list
+          (cons-term term term-list)
+          )
+      )
+      
+    (define (tag x) (attach-tag 'sparse x))
 
+    (put 'first-term '(sparse)
+         (lambda (x) (first-term x))
+         )
+    (put 'rest-terms '(sparse)
+         (lambda (x) (tag (rest-terms x)))
+         )
+    (put 'adjoin-term 'sparse
+         adjoin-term
+         )
+    )
+  (install-sparse-term-list-package)
+   
+  ; dense term list
+  (define (install-dense-term-list-package)
+    (define (first-term term-list) (make-term (- (length term-list) 1)
+                                              (car term-list)))
+    (define (rest-terms term-list) (cdr term-list))
+    (define (adjoin-term term term-list)
+      (if (=zero? (coeff term))
+          term-list
+          (if (= (order term) (- (length term-list) 1)); must -1
+              (cons-term (coeff term) term-list)
+              (adjoin-term term (cons-term 0 term-list))
+              )
+          )
+        
+      )
+    
+    (define (tag x) (attach-tag 'dense x))
+    (put 'first-term '(dense)
+         (lambda (x) (first-term x))
+         )
+    (put 'rest-terms '(dense)
+         (lambda (x) (tag (rest-terms x)))
+         )
+    (put 'adjoin-term 'dense
+         adjoin-term)
+    )
+  (install-dense-term-list-package)
+  
+  (define (first-term term-list)
+    (apply-generic 'first-term term-list)
+    )
+  (define (rest-terms term-list)
+    (apply-generic 'rest-terms term-list)
+    )
+  (define (adjoin-term term term-list)
+    (let ((adjoin-term-func (get 'adjoin-term (type-tag term-list))))
+      (adjoin-term-func term term-list)
+      )
+    ) 
+  
+  
   ; add
   (define (add-terms L1 L2)
     (cond ((empty-termlist? L1) L2)
@@ -548,14 +610,14 @@
   (define (mul-terms L1 L2)
     (define (mul-term-by-all-terms t1 L)
       (if (empty-termlist? L)
-          (the-empty-termlist)
+          (the-empty-termlist L)
           (let ((t2 (first-term L)))
             (adjoin-term
              (make-term (+ (order t1) (order t2))
                         (mul (coeff t1) (coeff t2)))
              (mul-term-by-all-terms t1 (rest-terms L))))))
     (if (empty-termlist? L1)
-        (the-empty-termlist)
+        (the-empty-termlist L1)
         (add-terms (mul-term-by-all-terms (first-term L1) L2)
                    (mul-terms (rest-terms L1) L2))))
   (define (mul-poly p1 p2)
@@ -585,7 +647,7 @@
   ; neg
   (define (neg-terms term-list)
     (if (empty-termlist? term-list)
-        (the-empty-termlist)
+        (the-empty-termlist term-list)
         (let ((t1 (first-term term-list)))
           (adjoin-term
            (neg-term t1) (neg-terms (rest-terms term-list)))
@@ -593,7 +655,8 @@
         )
     )
   (define (neg-poly p1)
-    (make-polynomial (variable p1) (neg-terms (term-list p1))))
+    (make-polynomial (variable p1) (neg-terms (term-list p1)))
+    )
 
   ; sub
   (define (sub-poly p1 p2)
@@ -624,6 +687,10 @@
   )
 
 (install-polynomial-package)
+(define (make-polynomial-dense var terms)
+  ((get 'make 'polynomial) var (attach-tag 'dense terms)))
+(define (make-polynomial-sparse var terms)
+  ((get 'make 'polynomial) var (attach-tag 'sparse terms)))
 (define (make-polynomial var terms)
   ((get 'make 'polynomial) var terms))
 
@@ -648,30 +715,32 @@
 (define z2 (make-complex-from-real-imag r1 n4))
 (define z3 (make-complex-from-real-imag r2 real2))
 
-(define p0 (make-polynomial 'x '((3 0) (2 0) (0 0))))
-(define p1 (make-polynomial 'x '((1 1)(0 1)))) ; x + 1
-(define p2 (make-polynomial 'x '((3 1)(0 -1)))) ; x^3 - 1
-(define p3 (make-polynomial 'x '((1 1)))) ; x
-(define p4 (make-polynomial 'x '((2 1)(0 -1)))) ; x^2 - 1
+(define p0 (make-polynomial-sparse 'x '((3 0) (2 0) (0 0))))
+(define p1 (make-polynomial-sparse 'x '((1 1)(0 1)))) ; x + 1
+(define p2 (make-polynomial-sparse 'x '((3 1)(0 -1)))) ; x^3 - 1
+(define p3 (make-polynomial-sparse 'x '((1 1)))) ; x
+(define p4 (make-polynomial-sparse 'x '((2 1)(0 -1)))) ; x^2 - 1
 
-(define p5 (make-polynomial 'x '((3 0) (2 -2) (0 0))))
+(define p5 (make-polynomial-sparse 'x '((3 0) (2 -2) (0 0))))
 
-(neg p5)
 
-(define p6 (make-polynomial 'x (list (list 4 p1)
-                                     (list 3 n1)
-                                     (list 2 r1)
-                                     (list 1 real1)))
+(define p6 (make-polynomial-sparse 'x (list (list 4 p1)
+                                            (list 3 n1)
+                                            (list 2 r1)
+                                            (list 1 real1)))
   )
+(define p7 (make-polynomial-sparse 'x (list (list 4 p0)
+                                            (list 3 n0)
+                                            (list 2 r0)
+                                            (list 1 real0)))
+  )
+(define p8 (make-polynomial-dense 'x (list p3 n3 r2 real1)))
 
+(define p9 (make-polynomial-dense 'x (list 4 5 6 7)))
 p6
 (neg p6)
 
-(define p7 (make-polynomial 'x (list (list 4 p0)
-                                     (list 3 n0)
-                                     (list 2 r0)
-                                     (list 1 real0)))
-  )
+
 (=zero? p7)
 
 (sub p1 p2)
@@ -679,4 +748,9 @@ p6
 (sub p4 (neg p6))
 (add p4 p6)
 
-(define f1 0.5)
+p9
+p2
+
+(add p9 p1)
+
+(mul p1 p9)
