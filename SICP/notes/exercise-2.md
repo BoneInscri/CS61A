@@ -3465,7 +3465,7 @@ If so, `div-poly` strips off the variable and passes the problem to `div-terms`,
 
 It is convenient to design `div-terms` to compute both the quotient and the remainder of a division.
 
- `Div-terms` can take two term lists as arguments and return a list of the quotient term list and the remainder term list.
+ `Div-terms` can take two term lists as arguments and return **a list of the quotient term list and the remainder term list.**
 
 Complete the following definition of `div-terms` by filling in the missing expressions. 
 

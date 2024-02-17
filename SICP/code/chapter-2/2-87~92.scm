@@ -579,7 +579,6 @@
       )
     ) 
   
-  
   ; add
   (define (add-terms L1 L2)
     (cond ((empty-termlist? L1) L2)
@@ -607,15 +606,15 @@
                (list p1 p2))))
 
   ; mul
+  (define (mul-term-by-all-terms t1 L)
+    (if (empty-termlist? L)
+        (the-empty-termlist L)
+        (let ((t2 (first-term L)))
+          (adjoin-term
+           (make-term (+ (order t1) (order t2))
+                      (mul (coeff t1) (coeff t2)))
+           (mul-term-by-all-terms t1 (rest-terms L))))))
   (define (mul-terms L1 L2)
-    (define (mul-term-by-all-terms t1 L)
-      (if (empty-termlist? L)
-          (the-empty-termlist L)
-          (let ((t2 (first-term L)))
-            (adjoin-term
-             (make-term (+ (order t1) (order t2))
-                        (mul (coeff t1) (coeff t2)))
-             (mul-term-by-all-terms t1 (rest-terms L))))))
     (if (empty-termlist? L1)
         (the-empty-termlist L1)
         (add-terms (mul-term-by-all-terms (first-term L1) L2)
@@ -659,14 +658,61 @@
     )
 
   ; sub
+  (define (sub-terms p1 p2)
+    (add-terms p1
+               (neg-terms p2)
+               )
+    )
   (define (sub-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
         (make-poly (variable p1)
-                   (add-terms (term-list p1)
-                              (neg-terms (term-list p2))
-                              ))
+                   (sub-terms (term-list p1)
+                              (term-list p2)
+                              )
+                   )
         (error "Polys not in same var -- SUB-POLY"
                (list p1 p2))))
+
+  ; div
+  (define (div-terms L1 L2)
+    ; return quotient and remainder
+    (if (empty-termlist? L1)
+        (list (the-empty-termlist L1) (the-empty-termlist L1))
+        (let ((t1 (first-term L1))
+              (t2 (first-term L2)))
+          (if (> (order t2) (order t1))
+              (list (the-empty-termlist L1) L1)
+              (let ((new-c (div (coeff t1) (coeff t2)))
+                    (new-o (- (order t1) (order t2))))
+                (let ((new-term (make-term new-o new-c)))
+                  (let ((rest-of-result
+                         (div-terms (sub-terms L1
+                                               (mul-term-by-all-terms new-term
+                                                                      L2))
+                                    L2)
+                         ; <compute rest of result recursively>
+                         ))
+                    ; new-c : new-coeff
+                    ; new-o : new-order
+                    (cons (adjoin-term new-term (car rest-of-result)) (cdr rest-of-result))
+                    ;<form complete result>
+                    )
+                  )
+                )
+              )
+          )
+        )
+    )
+  (define (div-poly p1 p2)    
+    (if (same-variable? (variable p1) (variable p2))
+        (let ((res (div-terms (term-list p1)
+                              (term-list p2)
+                              )))
+          (cons (make-poly (variable p1) (car res)) (make-poly (variable p1) (cadr res)))
+          )
+        (error "Polys not in same var -- DIV-POLY"
+               (list p1 p2)))
+    )
   
   ;; interface to rest of the system
   (define (tag p) (attach-tag 'polynomial p))
@@ -681,7 +727,13 @@
   (put 'sub '(polynomial polynomial)
        (lambda (p1 p2) (tag (sub-poly p1 p2)))
        )
-  
+  (put 'div '(polynomial polynomial)
+       (lambda (p1 p2)
+         (let ((res (div-poly p1 p2)))
+           (cons (tag (car res)) (tag (cdr res)))
+           )
+         )
+       )
   (put 'make 'polynomial
        (lambda (var terms) (tag (make-poly var terms))))
   )
@@ -693,7 +745,12 @@
   ((get 'make 'polynomial) var (attach-tag 'sparse terms)))
 (define (make-polynomial var terms)
   ((get 'make 'polynomial) var terms))
-
+(define (div-quotient p1 p2)
+  (car (div p1 p2))
+  )
+(define (div-remainder p1 p2)
+  (cdr (div p1 p2))
+  )
 ; test
 (define n0 (make-scheme-number 0))
 (define n1 (make-scheme-number 5))
@@ -737,6 +794,10 @@
 (define p8 (make-polynomial-dense 'x (list p3 n3 r2 real1)))
 
 (define p9 (make-polynomial-dense 'x (list 4 5 6 7)))
+
+(define p10 (make-polynomial-sparse 'x (list (list 5 1)
+                                             (list 0 -1))))
+
 p6
 (neg p6)
 
@@ -754,3 +815,16 @@ p2
 (add p9 p1)
 
 (mul p1 p9)
+
+p10
+p4
+
+(define res (div p2 p4))
+(define q (car res))
+(define remainder (cdr res))
+q
+remainder
+
+p1
+(div-quotient (mul p1 p2) p2)
+(div-remainder (mul p1 p2) p2)
