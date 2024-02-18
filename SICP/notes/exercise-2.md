@@ -3620,10 +3620,6 @@ and check your result by hand.
 
 
 
-
-
-
-
 #### **Exercise 2.95.** 
 
 Define *P*1, *P*2, and *P*3 to be the polynomials
@@ -3641,15 +3637,18 @@ To understand what is happening, try tracing `gcd-terms` while computing the GCD
 
 We can solve the problem exhibited in exercise 2.95 **if we use the following modification of the GCD algorithm (which really works only in the case of polynomials with integer coefficients).** 
 
-Before performing any polynomial division in the GCD computation, we multiply the dividend by an integer constant factor, chosen to guarantee that no fractions will arise during the division process. 
+Before performing any polynomial division in the GCD computation, **we multiply the dividend by an integer constant factor, chosen to guarantee that no fractions will arise during the division process.** 
 
-Our answer will thus differ from the actual GCD by an integer constant factor, but this does not matter in the case of reducing rational functions to lowest terms; the GCD will be used to divide both the numerator and denominator, so the integer constant factor will cancel out.
+Our answer will thus differ from the actual GCD by an integer constant factor, but this does not matter in the case of reducing rational functions to lowest terms; **the GCD will be used to divide both the numerator and denominator, so the integer constant factor will cancel out.**
 
-More precisely, if *P* and *Q* are polynomials, let *O*1 be the order of *P* (i.e., the order of the largest term of *P*) and let *O*2 be the order of *Q*. 
+More precisely, if *P* and *Q* are polynomials, 
 
-Let *c* be the leading coefficient of *Q*. 
+- Let *O*1 be the order of *P* (i.e., the order of the largest term of *P*) .
+- Let *O*2 be the order of *Q*. 
+- Let *c* be the leading coefficient of *Q*. 
 
-Then it can be shown that, if we multiply *P* by the *integerizing factor* *c*1+*O*1 -*O*2, **the resulting polynomial can be divided by *Q* by using the `div-terms` algorithm without introducing any fractions.** 
+
+Then it can be shown that, if we multiply *P* by the *integerizing factor* $c ^{1+O_1 - O_2}$, **the resulting polynomial can be divided by *Q* by using the `div-terms` algorithm without introducing any fractions.** 
 
 The operation of multiplying the dividend by this constant and 
 
@@ -3661,7 +3660,9 @@ The remainder of the division is **called the *pseudo remainder***.
 
 （2）观察结果如何？
 
-（3）怎么解决这个问题？
+（3）怎么解决这个问题？被除数乘以一个系数：$c^{1+O_1+O_2}$
+
+
 
 
 
@@ -3669,31 +3670,45 @@ The remainder of the division is **called the *pseudo remainder***.
 
 #### **Exercise 2.96.** 
 
-a.  Implement the procedure `pseudoremainder-terms`, which is just like `remainder-terms` except that it multiplies the dividend by the integerizing factor described above before calling `div-terms`. 
+a.  Implement the procedure `pseudoremainder-terms`, which is just like `remainder-terms` except that it multiplies the dividend **by the integerizing factor described above before calling `div-terms`.** 
 
 Modify `gcd-terms` to use `pseudoremainder-terms`, and verify that `greatest-common-divisor` now **produces an answer with integer coefficients on the example in exercise 2.95.**
 
-b.  The GCD now has integer coefficients, but they are larger than those of *P*1. 
+b.  The GCD now has integer coefficients, **but they are larger than those of *P*1.** 
 
 Modify `gcd-terms` so that it removes common factors from the coefficients of the answer by dividing all the coefficients by their (integer) greatest common divisor.
 
 Thus, here is how to reduce a rational function to lowest terms:
 
-Compute the GCD of the numerator and denominator, using the version of `gcd-terms` from exercise 2.96
+**Compute the GCD of the numerator and denominator, using the version of `gcd-terms` from exercise 2.96**
 
-When you obtain the GCD, multiply both numerator and denominator by the same integerizing factor before dividing through by the GCD, so that division by the GCD will not introduce any noninteger coefficients. 
+When you obtain the GCD, **multiply both numerator and denominator by the same integerizing factor before dividing through by the GCD, so that division by the GCD will not introduce any noninteger coefficients.** 
 
-As the factor you can use the leading coefficient of the GCD raised to the power 
+As the **factor** 
 
-1 + *O*1 - *O*2, where *O*2 is the order of the GCD and *O*1 is the maximum of the orders of the numerator and denominator. 
+you can use
 
-This will ensure that dividing the numerator and denominator by the GCD will not introduce any fractions.
+- **the leading coefficient of the GCD raised to the power 1 + *O*1 - *O*2,** 
+- ***O*2 is the order of the GCD**
+- ***O*1 is the maximum of the orders of the numerator and denominator.** 
 
-The result of this operation will be a numerator and denominator with integer coefficients. 
+2-97 需要用？
 
-The coefficients will normally be very large because of all of the integerizing factors, so the last step is to remove the redundant factors by computing the (integer) greatest common divisor of all the coefficients of the numerator and the denominator and dividing through by this factor.
+
+
+This will **ensure that dividing the numerator and denominator by the GCD will not introduce any fractions.**
+
+**The result of this operation will be a numerator and denominator with integer coefficients.** 
+
+The coefficients will normally be very large because of all of the integerizing factors, **so the last step is to remove the redundant factors by computing the (integer) greatest common divisor of all the coefficients of the numerator and the denominator and dividing through by this factor.**
 
 （1）实现 pseudoremainder-terms
+
+（2）使用 pseudoremainder-terms 修改 gcd-terms
+
+（3）使用修改后的gcd-terms 得到的结果偏大
+
+（4）计算GCD的最后一步，需要计算被除数的所有系数的gcd，然后可将gcd 除以 这个系数的gcd。
 
 
 
@@ -3749,9 +3764,17 @@ One of the active areas in the development of algebraic-manipulation systems is 
 
 （2）仿造 `add-poly`，利用 `reduce-terms`，实现  `reduce-poly`
 
-（3）在 make-rat 之前对传入的 分子和分母使用欧几里德算法进行化简，多项式参数和普通的数字都合法
+（3）在 make-rat 之前对传入的 分子和分母使用欧几里德算法进行化简，多项式参数和普通的数字都合法。
 
 （4）验证代码是否正确。
+
+（5）记得在reduce-terms里面需要用2-96 的factor进行计算后，才能进行泛型除法。
+
+
+
+
+
+
 
 算法虽然在数学上很简单，但速度非常慢。
 
