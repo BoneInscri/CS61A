@@ -84,7 +84,8 @@
     [(eq? type 'rational) 1]
     [(eq? type 'real) 2]
     [(eq? type 'complex) 3]
-    [(eq? type 'maxtype) 4]
+    [(eq? type 'polynomial) 4]
+    [(eq? type 'maxtype) 5]
     [else (error "unknown type" type)]
     ))
 
@@ -154,7 +155,7 @@
     (let ((proc (get op type-tags)))
       (if proc
           (let ((res (apply proc (map contents args))))
-            (if (or (eq? op 'raise) (eq? op 'project))
+            (if (or (eq? op 'raise) (eq? op 'project) (eq? op 'print))
                 res ; don't drop when op is raise or project
                 (try-drop res)
                 )
@@ -177,6 +178,8 @@
 (define (raise x) (apply-generic 'raise x))
 (define (project x) (apply-generic 'project x))
 (define (neg x) (apply-generic 'neg x))
+(define (print x) (apply-generic 'print x))
+(define (gcd x y) (apply-generic 'gcd x y))
 
 ; scheme-number
 (define (install-scheme-number-package)
@@ -213,6 +216,20 @@
          (- x)
          )
        )
+  (put 'print '(scheme-number)
+       (lambda (x)
+         (display x)
+         )
+       )
+  (put 'gcd '(scheme-number scheme-number)
+       (lambda (x y)
+         (define (gcd a b)
+           (if (= b 0)
+               a
+               (gcd b (remainder a b))))
+         (gcd x y)
+         )
+       )
   (put 'make 'scheme-number
        (lambda (x) x)
        )
@@ -227,35 +244,49 @@
   (define (numer x) (car x))
   (define (denom x) (cdr x))
   (define (make-rat n d)
-    (define s (if (or (and (> 0 n) (> 0 d)) (and (< 0 n) (< 0 d))) 1 -1))
-    (if (= d 0)
+    (if (=zero? d)
         (error "denom can't be 0"))
+    ;(define s (if (or (and (> 0 n) (> 0 d)) (and (< 0 n) (< 0 d))) 1 -1))
+
     (let ((g (gcd n d)))
-      ; ?.0 -> ?
-      (cons (inexact->exact (* s (abs (/ n g))))
-            (inexact->exact (abs (/ d g)))
-            )
+    ; ?.0 -> ?
+    ;  (cons (inexact->exact (* s (abs (/ n g))))
+    ;        (inexact->exact (abs (/ d g)))
+    ;        )
+      ;(display "n : ")
+      ;(display n)
+      ;(newline)
+      ;(display "d : ")
+      ;(display d)
+      ;(newline)
+      ;(display "g : ")
+      ;(display g)
+      ;(newline)
+      ;(display (div n g))
+      (error "pause")
+      (cons (div n g) (div d g))
       )
     )
   (define (add-rat x y)
-    (make-rat (+ (* (numer x) (denom y))
-                 (* (numer y) (denom x)))
-              (* (denom x) (denom y))))
+    (make-rat (add (mul (numer x) (denom y))
+                   (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
   (define (sub-rat x y)
-    (make-rat (- (* (numer x) (denom y))
-                 (* (numer y) (denom x)))
-              (* (denom x) (denom y))))
+    (make-rat (sub (mul (numer x) (denom y))
+                   (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
   (define (mul-rat x y)
-    (make-rat (* (numer x) (numer y))
-              (* (denom x) (denom y))))
+    (make-rat (mul (numer x) (numer y))
+              (mul (denom x) (denom y))))
   (define (div-rat x y)
-    (make-rat (* (numer x) (denom y))
-              (* (denom x) (numer y))))
+    (make-rat (mul (numer x) (denom y))
+              (mul (denom x) (numer y))))
   (define (equ?-rat x y)
-    (and (= (numer x) (numer y))
-         (= (denom x) (denom y))))
+    (and (equ? (numer x) (numer y))
+         (equ? (denom x) (denom y))))
   (define (=zero?-rat x)
-    (= (numer x) 0))
+    (=zero? (numer x))
+    )
 
   (define (round-to-two-decimal num)
     (/ (round (* num 100)) 100))
@@ -273,11 +304,11 @@
        (lambda (x y) (equ?-rat x y)))
   (put '=zero? '(rational)
        (lambda (x) (=zero?-rat x)))
-  (put 'raise '(rational) 
+  (put 'raise '(rational)
        (lambda (x) (make-real (round-to-two-decimal (* 1.0 (/ (numer x) (denom x))) ))))
   (put 'project 'rational
        (lambda (x)
-         (if (= (denom x) 1)
+         (if (equ? (denom x) 1)
              (make-scheme-number (numer x))
              #f
              ))
@@ -288,7 +319,14 @@
        )
   (put 'neg '(rational)
        (lambda (x)
-         (make-rational (- (numer x)) (denom x))
+         (make-rational (neg (numer x)) (denom x))
+         )
+       )
+  (put 'print '(rational)
+       (lambda (x)
+         (print (numer x))
+         (display " / ")
+         (print (denom x))
          )
        )
   (put 'make 'rational
@@ -344,6 +382,11 @@
   (put 'neg '(real)
        (lambda (x)
          (- x)
+         )
+       )
+  (put 'print '(real)
+       (lambda (x)
+         (display x)
          )
        )
   (put 'make 'real
@@ -473,9 +516,23 @@
              )
          )
        )
+  (put 'raise '(complex)
+       (lambda (z1)
+         (make-polynomial-sparse 'x (list (list 0 (tag z1))))
+         )
+       )
+  
   (put 'neg '(complex)
        (lambda (x)
          (make-complex-from-real-imag (- (real-part x)) (- (imag-part x)))
+         )
+       )
+  (put 'print '(complex)
+       (lambda (x)
+         (print (real-part x))
+         (display "+")
+         (print (imag-part x))
+         (display " i")
          )
        )
   )
@@ -577,7 +634,7 @@
     (let ((adjoin-term-func (get 'adjoin-term (type-tag term-list))))
       (adjoin-term-func term term-list)
       )
-    ) 
+    )
   
   ; add
   (define (add-terms L1 L2)
@@ -714,6 +771,107 @@
                (list p1 p2)))
     )
   
+  ; gcd
+  (define (remainder-terms L1 L2)
+    (let ((res (div-terms L1
+                          L2)))
+      (cadr res)
+      )
+    )
+  (define (gcd-terms a b)
+    (if (empty-termlist? b)
+        a
+        (gcd-terms b (remainder-terms a b))))
+  (define (gcd-poly p1 p2)    
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (gcd-terms (term-list p1)
+                              (term-list p2)
+                              )
+                   )
+        (error "Polys not in same var -- GCD-POLY"
+               (list p1 p2)))
+    )
+
+  ; simplify polynomial
+  (define (simplify-terms term-list)
+    (if (empty-termlist? term-list)
+        (the-empty-termlist term-list)
+        (let ((t1 (first-term term-list)))  
+          (if (=zero? (coeff t1))
+              (simplify-terms (rest-terms term-list))
+              (adjoin-term t1 (simplify-terms (rest-terms term-list))
+               )
+              )
+          )    
+        )
+    )
+  
+  
+  ; equ?
+  (define (dense-to-sparse L)
+    (define (do-dense-to-sparse term-list)
+      (if (empty-termlist? term-list)
+          (list 'sparse)
+          (let ((t1 (first-term term-list)))
+            (if (=zero? (coeff t1))
+                (do-dense-to-sparse (rest-terms term-list))
+                (adjoin-term t1 (do-dense-to-sparse (rest-terms term-list)))
+                )
+            )
+          )
+      )
+    (cond ((eq? (type-tag L) 'sparse) L)
+          ((eq? (type-tag L) 'dense)
+           (do-dense-to-sparse L)
+           )
+          (else
+           (error "error term list type : " (type-tag L))
+           )
+        )
+    )
+  
+  (define (equ-terms L1 L2)
+    (cond ((and (empty-termlist? L1) (empty-termlist? L2)) #t)
+          ((and (not (empty-termlist? L1)) (not (empty-termlist? L2)))
+           (let ((t1 (first-term L1))
+                 (t2 (first-term L2)))
+             (if (and (equ? (coeff t1) (coeff t2)) (= (order t1) (order t2)))
+                 (equ-terms (rest-terms L1) (rest-terms L2))
+                 #f
+                 )
+             )   
+           )
+          (else #f)
+          )
+    )
+  (define (equ?-ply p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (let ((L1 (term-list p1))
+              (L2 (term-list p2)))
+          (equ-terms (dense-to-sparse L1)
+                     (dense-to-sparse L2)
+                     )
+          )
+        #f
+        )
+    )
+  ; print
+  (define (print-poly p1)
+    (define (print-terms var terms)
+      (if (not (empty-termlist? terms))
+          (let ((t1 (first-term terms)))
+            (print (coeff t1))
+            (display var)
+            (display "^")
+            (display (order t1))
+            (display " ")
+            (print-terms var (rest-terms terms))
+            ))
+      )
+    (print-terms (variable p1) (term-list p1))
+    )
+  
   ;; interface to rest of the system
   (define (tag p) (attach-tag 'polynomial p))
   (put 'add '(polynomial polynomial) 
@@ -738,8 +896,35 @@
            )
          )
        )
+  (put 'equ? '(polynomial polynomial)
+       (lambda (p1 p2)
+         (equ?-ply p1 p2)
+         )
+       )
+  (put 'project 'polynomial
+       (lambda (p1)
+         (cond ((=zero?-poly p1)
+                (make-scheme-number 0))
+               ((and (= (length (term-list p1)) 2)
+                     (= (order (first-term (term-list p1))) 0))
+                (coeff (first-term (term-list p1)))
+                )
+               (else #f)
+               )
+         )
+       )
+  (put 'print '(polynomial)
+       (lambda (p1)
+         (print-poly p1)
+         )
+       )
+  (put 'gcd '(polynomial polynomial)
+       (lambda (p1 p2)
+         (tag (gcd-poly p1 p2))
+         )
+       )
   (put 'make 'polynomial
-       (lambda (var terms) (tag (make-poly var terms)))
+       (lambda (var terms) (tag (make-poly var (simplify-terms terms))))
        )
   )
 
@@ -761,79 +946,22 @@
   )
 
 ; test
-(define n0 (make-scheme-number 0))
-(define n1 (make-scheme-number 5))
-(define n2 (make-scheme-number 4))
-(define n3 (make-scheme-number 6))
-(define n4 (make-scheme-number -2))
-(define n5 (make-scheme-number 2))
+(define p01 (make-polynomial-sparse 'x '((4 0) (3 1) (0 0))))
+(define p02 (make-polynomial-dense 'x '(0 0 2 0 1)))
+(define pe1 (make-polynomial-sparse 'x '((5 4) (4 0) (3 2) (2 0))))
+(define pe2 (make-polynomial-dense 'x '(4 2 0 0 1)))
+
+(define p1 (make-polynomial-sparse 'x '((2 1) (0 1)))); x^2 + 1
+(define p2 (make-polynomial-sparse 'x '((3 1) (0 1)))); x^3 + 1
+;(define rf (make-rational p2 p1))
+
+(define p3 (make-polynomial-sparse 'x '((4 1) (3 -1) (2 -2) (1 2))))
+(define p4 (make-polynomial-sparse 'x '((3 1) (1 -1))))
+;(print rf)
+;(newline)
+;(print (add rf rf))
+
+(gcd p3 p4)
 
 
-(define r0 (make-rational 0 2))
-(define r1 (make-rational -2 3))
-(define r2 (make-rational 4 5))
-(define real0 (make-real 0.0))
-(define real1 (make-real 4.0))
-(define real2 (make-real 5.2))
 
-(define z0 (make-complex-from-real-imag n0 r0))
-(define z1 (make-complex-from-real-imag real1 n4))   
-(define z2 (make-complex-from-real-imag r1 n4))
-(define z3 (make-complex-from-real-imag r2 real2))
-
-(define p0 (make-polynomial-sparse 'x '((3 0) (2 0) (0 0))))
-(define p1 (make-polynomial-sparse 'x '((1 1)(0 1)))) ; x + 1
-(define p2 (make-polynomial-sparse 'x '((3 1)(0 -1)))) ; x^3 - 1
-(define p3 (make-polynomial-sparse 'x '((1 1)))) ; x
-(define p4 (make-polynomial-sparse 'x '((2 1)(0 -1)))) ; x^2 - 1
-
-(define p5 (make-polynomial-sparse 'x '((3 0) (2 -2) (0 0))))
-
-
-(define p6 (make-polynomial-sparse 'x (list (list 4 p1)
-                                            (list 3 n1)
-                                            (list 2 r1)
-                                            (list 1 real1)))
-  )
-(define p7 (make-polynomial-sparse 'x (list (list 4 p0)
-                                            (list 3 n0)
-                                            (list 2 r0)
-                                            (list 1 real0)))
-  )
-(define p8 (make-polynomial-dense 'x (list p3 n3 r2 real1)))
-
-(define p9 (make-polynomial-dense 'x (list 4 5 6 7)))
-
-(define p10 (make-polynomial-sparse 'x (list (list 5 1)
-                                             (list 0 -1))))
-
-p6
-(neg p6)
-
-
-(=zero? p7)
-
-(sub p1 p2)
-
-(sub p4 (neg p6))
-(add p4 p6)
-
-p9
-p2
-
-(add p9 p1)
-
-(mul p1 p9)
-
-p10
-p4
-
-(define res (div p2 p4))
-(define q (car res))
-(define remainder (cdr res))
-q
-remainder
-
-p1
-(div-quotient (mul p1 p2) p2)
-(div-remainder (mul p1 p2) p2)

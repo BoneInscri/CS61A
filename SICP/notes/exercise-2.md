@@ -3498,7 +3498,7 @@ Use this to implement `div-poly`, which takes two polys as arguments and returns
 
 #### **Exercise 2.92.** 
 
-By imposing an ordering on variables, extend the polynomial package so that addition and multiplication of polynomials works for polynomials in different variables. 
+By imposing an ordering on variables, extend the polynomial package so that **addition and multiplication of polynomials works for polynomials in different variables.** 
 
 (This is not easy!)
 
@@ -3508,11 +3508,17 @@ By imposing an ordering on variables, extend the polynomial package so that addi
 
 
 
+系数和变量是交叉混合的，怎么进行运算？
+
+太麻烦了，跳过这个题目。
+
+
+
 
 
 #### **Exercise 2.93.** 
 
-Modify the rational-arithmetic package to use generic operations, but change `make-rat` so that it does not attempt to reduce fractions to lowest terms. 
+Modify the rational-arithmetic package to use generic operations, **but change `make-rat` so that it does not attempt to reduce fractions to lowest terms**. 
 
 Test your system by calling `make-rational` on two polynomials to produce a rational function
 
@@ -3522,13 +3528,15 @@ Test your system by calling `make-rational` on two polynomials to produce a rati
 (define rf (make-rational p2 p1))
 ```
 
-Now add `rf` to itself, using `add`. You will observe that this addition procedure does not reduce fractions to lowest terms.
+Now add `rf` to itself, using `add`. 
 
-We can reduce polynomial fractions to lowest terms using the same idea we used with integers: modifying `make-rat` to divide both the numerator and the denominator by their greatest common divisor. 
+You will observe that this addition procedure does not reduce fractions to lowest terms.
+
+We can reduce polynomial fractions to lowest terms using the same idea we used with integers: **modifying `make-rat` to divide both the numerator and the denominator by their greatest common divisor.** 
 
 The notion of "greatest common divisor'' makes sense for polynomials. 
 
-In fact, we can compute the GCD of two polynomials using essentially the same Euclid's Algorithm that works for integers.
+In fact, **we can compute the GCD of two polynomials using essentially the same Euclid's Algorithm that works for integers.**
 
 The integer version is
 
@@ -3550,17 +3558,43 @@ Using this, we could make the obvious modification to define a GCD operation tha
 
 where `remainder-terms` picks out the remainder component of the list returned by the term-list division operation `div-terms` that was implemented in exercise 2.91.
 
+（1）修改 rational ，让其支持泛型操作。
+
+（2）修改 make-rat，将分化简为最小项。将分子和分母同时除以它们的最大公约数。
+
+（3）仿造整数版本的gcd，实现多项式版本的gcd。
+
+（4）remainder-terms 已经实现了。
+
+
+
+The fact that Euclid's Algorithm works for polynomials is formalized in algebra by saying that polynomials form a kind of algebraic domain **called a *Euclidean ring*.** 
+
+A Euclidean ring is a domain that admits addition, subtraction, and commutative multiplication, together with a way of assigning to each element *x* of the ring a positive integer "measure'' *m*(*x*) with the properties **that m(xy)>m(x) for any nonzero *x* and *y* and that, given any *x* and *y*, there exists a *q* such that *y* = qx + *r* and either *r* = 0 or m(r)< m(x).** 
+
+From an abstract point of view, this is what is needed to prove that Euclid's Algorithm works. 
+
+For the domain of integers, **the measure *m* of an integer is the absolute value of the integer itself.** 
+
+For the domain of polynomials, **the measure of a polynomial is its degree.**
+
+多项式形成了一个叫做欧几里德 环的代数域。
+
+
+
+
+
 
 
 #### **Exercise 2.94.** 
 
 Using `div-terms`, implement the procedure `remainder-terms` and use this to define `gcd-terms` as above. 
 
-Now write a procedure `gcd-poly` that computes the polynomial GCD of two polys. 
+Now write a procedure `gcd-poly` that **computes the polynomial GCD of two polys.** 
 
-(The procedure should signal an error if the two polys are not in the same variable.) 
+(The procedure should signal an error **if the two polys are not in the same variable**.) 
 
-Install in the system a generic operation `greatest-common-divisor` that reduces to `gcd-poly` for polynomials and to ordinary `gcd` for ordinary numbers. 
+Install in the system a generic operation `greatest-common-divisor` **that reduces to `gcd-poly` for polynomials and to ordinary `gcd` for ordinary numbers.** 
 
 As a test, try
 
@@ -3574,6 +3608,20 @@ and check your result by hand.
 
 
 
+（1）使用 div-terms 实现 gcd-terms，即得到多项式版本的最大公因数
+
+（2）仿造其他的poly过程，使用gcd-terms 实现 gcd-poly，即得到两个多项式的GCD
+
+（3）实现 greatest-common-divisor ，一个通用计算GCD的过程。
+
+
+
+
+
+
+
+
+
 
 
 #### **Exercise 2.95.** 
@@ -3582,13 +3630,16 @@ Define *P*1, *P*2, and *P*3 to be the polynomials
 $$
 \begin{array}{rl}{P_{1}:}&{{\mathbf{x}^{2}-2\mathbf{x}+1}}\\\\{P_{2}:}&{11\mathbf{x}^{2}+7}\\\\{P_{3}:}&{13\mathbf{x}+5}\\\end{array}
 $$
-Now define *Q*1 to be the product of *P*1 and *P*2 and *Q*2 to be the product of *P*1 and *P*3, and use `greatest-common-divisor` (exercise 2.94) to compute the GCD of *Q*1 and *Q*2. Note that the answer is not the same as *P*1. 
-
-This example introduces noninteger operations into the computation, causing difficulties with the GCD algorithm. 
+Now define *Q*1 to be the product of *P*1 and *P*2 and *Q*2 to be the product of *P*1 and *P*3, and use `greatest-common-divisor` (exercise 2.94) to compute the GCD of *Q*1 and *Q*2. **Note that the answer is not the same as *P*1.** 
+$$
+Q_1=P_1P_2\\
+Q_2=P_1P_3
+$$
+This example introduces **noninteger operations into the computation, causing difficulties with the GCD algorithm.** 
 
 To understand what is happening, try tracing `gcd-terms` while computing the GCD or try performing the division by hand.
 
-We can solve the problem exhibited in exercise 2.95 if we use the following modification of the GCD algorithm (which really works only in the case of polynomials with integer coefficients). 
+We can solve the problem exhibited in exercise 2.95 **if we use the following modification of the GCD algorithm (which really works only in the case of polynomials with integer coefficients).** 
 
 Before performing any polynomial division in the GCD computation, we multiply the dividend by an integer constant factor, chosen to guarantee that no fractions will arise during the division process. 
 
@@ -3598,11 +3649,21 @@ More precisely, if *P* and *Q* are polynomials, let *O*1 be the order of *P* (i.
 
 Let *c* be the leading coefficient of *Q*. 
 
-Then it can be shown that, if we multiply *P* by the *integerizing factor* *c*1+*O*1 -*O*2, the resulting polynomial can be divided by *Q* by using the `div-terms` algorithm without introducing any fractions. 
+Then it can be shown that, if we multiply *P* by the *integerizing factor* *c*1+*O*1 -*O*2, **the resulting polynomial can be divided by *Q* by using the `div-terms` algorithm without introducing any fractions.** 
 
-The operation of multiplying the dividend by this constant and then dividing is sometimes called the *pseudodivision* of *P* by *Q*. 
+The operation of multiplying the dividend by this constant and 
 
-The remainder of the division is called the *pseudoremainder*.
+then dividing is sometimes **called the *pseudo division* of *P* by *Q*.** 
+
+The remainder of the division is **called the *pseudo remainder***.
+
+（1）使用 greatest-common-divisor 计算 Q1 和 Q2 的GCD
+
+（2）观察结果如何？
+
+（3）怎么解决这个问题？
+
+
 
 
 
@@ -3610,11 +3671,11 @@ The remainder of the division is called the *pseudoremainder*.
 
 a.  Implement the procedure `pseudoremainder-terms`, which is just like `remainder-terms` except that it multiplies the dividend by the integerizing factor described above before calling `div-terms`. 
 
-Modify `gcd-terms` to use `pseudoremainder-terms`, and verify that `greatest-common-divisor` now produces an answer with integer coefficients on the example in exercise 2.95.
+Modify `gcd-terms` to use `pseudoremainder-terms`, and verify that `greatest-common-divisor` now **produces an answer with integer coefficients on the example in exercise 2.95.**
 
+b.  The GCD now has integer coefficients, but they are larger than those of *P*1. 
 
-
-b.  The GCD now has integer coefficients, but they are larger than those of *P*1. Modify `gcd-terms` so that it removes common factors from the coefficients of the answer by dividing all the coefficients by their (integer) greatest common divisor.
+Modify `gcd-terms` so that it removes common factors from the coefficients of the answer by dividing all the coefficients by their (integer) greatest common divisor.
 
 Thus, here is how to reduce a rational function to lowest terms:
 
@@ -3632,11 +3693,15 @@ The result of this operation will be a numerator and denominator with integer co
 
 The coefficients will normally be very large because of all of the integerizing factors, so the last step is to remove the redundant factors by computing the (integer) greatest common divisor of all the coefficients of the numerator and the denominator and dividing through by this factor.
 
+（1）实现 pseudoremainder-terms
+
+
+
 
 
 #### **Exercise 2.97.** 
 
-a. Implement this algorithm as a procedure `reduce-terms` that takes two term lists `n` and `d` as arguments and returns a list `nn`, `dd`, which are `n` and `d` reduced to lowest terms via the algorithm given above. 
+a. Implement this algorithm as a procedure `reduce-terms` that takes two term lists `n` and `d` as arguments and returns a list `nn`, `dd`, **which are `n` and `d` reduced to lowest terms via the algorithm given above.** 
 
 Also write a procedure `reduce-poly`, analogous to `add-poly`, that checks to see if the two polys have the same variable. 
 
@@ -3650,9 +3715,9 @@ b. Define a procedure analogous to `reduce-terms` that does what the original `m
     (list (/ n g) (/ d g))))
 ```
 
-and define `reduce` as a generic operation that calls `apply-generic` to dispatch to either `reduce-poly` (for `polynomial` arguments) or `reduce-integers` (for `scheme-number` arguments). 
+and define `reduce` as a generic operation that calls `apply-generic` **to dispatch to either `reduce-poly` (for `polynomial` arguments) or `reduce-integers` (for `scheme-number` arguments).** 
 
-You can now easily make the rational-arithmetic package reduce fractions to lowest terms by having `make-rat` call `reduce` before combining the given numerator and denominator to form a rational number. 
+You can now easily make the rational-arithmetic package reduce fractions to lowest terms by having `make-rat` call `reduce` before combining **the given numerator and denominator to form a rational number.** 
 
 The system now handles rational expressions in either integers or polynomials. 
 
@@ -3668,15 +3733,31 @@ To test your program, try the example at the beginning of this extended exercise
 (add rf1 rf2)
 ```
 
-See if you get the correct answer, correctly reduced to lowest terms.
+See if you get the correct answer, **correctly reduced to lowest terms.**
 
 The GCD computation is at the heart of any system that does operations on rational functions. 
 
-The algorithm used above, although mathematically straightforward, is extremely slow. 
+The algorithm used above, **although mathematically straightforward, is extremely slow.** 
 
-The slowness is due partly to the large number of division operations and partly to the enormous size of the intermediate coefficients generated by the pseudodivisions. 
+The slowness is due partly to the large number of division operations and partly **to the enormous size of the intermediate coefficients generated by the pseudodivisions.** 
 
 One of the active areas in the development of algebraic-manipulation systems is the design of better algorithms for computing polynomial GCDs.
 
 
+
+（1）实现 `reduce-terms`，将分式化到最简
+
+（2）仿造 `add-poly`，利用 `reduce-terms`，实现  `reduce-poly`
+
+（3）在 make-rat 之前对传入的 分子和分母使用欧几里德算法进行化简，多项式参数和普通的数字都合法
+
+（4）验证代码是否正确。
+
+算法虽然在数学上很简单，但速度非常慢。
+
+缓慢的部分原因是由于大量的除法操作，部分原因是由于伪除法产生的中间系数的巨大大小。
+
+One extremely efficient and elegant method for computing polynomial GCDs was discovered by Richard Zippel (1979). 
+
+The method is a **probabilistic algorithm**, as is the fast test for primality that we discussed in chapter 1. **Zippel's book (1993) describes this method, together with other ways to compute polynomial GCDs**
 
