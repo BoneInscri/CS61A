@@ -156,12 +156,12 @@ It is useful to be able to **reset a random-number generator** to produce a sequ
 
 Design a new `rand` procedure that is called with an argument that is either the symbol `generate` or the symbol `reset` and behaves as follows: 
 
-- `(rand 'generate)` produces a new random number; 
-- `((rand 'reset) <*new-value*>)` resets the internal state variable to the designated <*new-value*>. 
+- `(rand 'generate)` **produces a new random number;** 
+- `((rand 'reset) <*new-value*>)` **resets the internal state variable to the designated <*new-value*>.** 
 
-Thus, by resetting the state, one can generate repeatable sequences. 
+Thus, by resetting the state, one can generate **repeatable sequences.** 
 
-These are very handy to have when testing and debugging programs that use random numbers.
+These are very handy to have when testing and debugging programs **that use random numbers.**
 
 重新设计 rand 这个过程。
 
@@ -170,4 +170,8 @@ These are very handy to have when testing and debugging programs that use random
 （2）传入 'reset，将内部状态设置为 new-value，重置状态，可以生成重复的序列
 
 在测试和调试使用随机数的程序时**非常方便**
+
+即可以**多次生成同一个伪随机数序列**。
+
+
 
