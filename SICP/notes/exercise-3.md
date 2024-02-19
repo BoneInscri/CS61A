@@ -60,6 +60,38 @@ For instance, we could make a monitored version of the `sqrt` procedure:
 
 
 
+#### **Exercise 3.3.** 
+
+Modify the `make-account` procedure so that it **creates password-protected accounts.** That is, `make-account` should take a symbol **as an additional argument, as in**
+
+```lisp
+(define acc (make-account 100 'secret-password))
+```
+
+The resulting account object should process a request only **if it is accompanied by the password with which the account was created, and should otherwise return a complaint:**
+
+```lisp
+((acc 'secret-password 'withdraw) 40)
+; 60
+
+((acc 'some-other-password 'deposit) 50)
+; "Incorrect password"
+```
+
+（1）account 需要密码
+
+（2）密码正确，可以进行操作，密码不正确，返回错误信息
+
+
+
+
+
+#### **Exercise 3.4.** 
+
+Modify the `make-account` procedure of exercise 3.3 by adding another local state variable so that, if an account is accessed more than seven consecutive times with an incorrect password, it invokes the procedure `call-the-cops`.
+
+如果使用错误的密码连续访问帐户超过7次，**它将调用' call-the-cops '过程。**
+
 
 
 

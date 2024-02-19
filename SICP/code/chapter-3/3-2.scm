@@ -4,8 +4,7 @@
   (define count 0)
   
   (define (inc-count)
-    (begin (set! count (+ count 1))
-           count)
+    (set! count (+ count 1))
     )
 
   (define (reset-count)
