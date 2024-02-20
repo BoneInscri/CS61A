@@ -175,3 +175,74 @@ These are very handy to have when testing and debugging programs **that use rand
 
 
 
+#### **Exercise 3.7.** 
+
+Consider the bank account objects created by `make-account`, with the password modification described in exercise 3.3.
+
+Suppose that our banking system requires the ability to make joint accounts. 
+
+Define a procedure `make-joint` that accomplishes this. 
+
+`Make-joint` should take three arguments. 
+
+- The first is a **password-protected account.** 
+- The second argument must match the password with which the account was defined in order for the `make-joint` operation to proceed. 
+- The third argument is **a new password.** 
+
+**`Make-joint` is to create an additional access to the original account using the new password.** 
+
+For example, if `peter-acc` is a bank account with password `open-sesame`, then
+
+```lisp
+(define paul-acc
+  (make-joint peter-acc 'open-sesame 'rosebud))
+```
+
+will allow one to make transactions on `peter-acc` using the name `paul-acc` and the password `rosebud`.
+
+You may wish to modify your solution to exercise 3.3 to accommodate this new feature.
+
+
+
+（1）实现make-join，构建共享账户。
+
+（2）参数：有密码的账户，对应的密码，一个新密码。
+
+（3）效果就是，可以用新密码在新账户上对一个共享的账户进行操作。
+
+
+
+问题是如果密码错误呢？
+
+
+
+#### **Exercise 3.8.** 
+
+When we defined the evaluation model in section 1.1.3, **we said that the first step in evaluating an expression is to evaluate its subexpressions.** 
+
+But we never specified the order in which the subexpressions **should be evaluated (e.g., left to right or right to left).** 
+
+When we introduce assignment, the order in which the arguments to a procedure are evaluated can make a difference to the result. 
+
+Define a simple procedure `f` such that evaluating `(+ (f 0) (f 1))` will return 0 if the arguments to `+` are evaluated from left to right 
+
+**but will return 1 if the arguments are evaluated from right to left.**
+
+
+
+（1）引入set!后，对过程的实参求值的顺序会对结果有影响
+
+（2） (+ (f 0) (f 1)) 从左到右，返回0；从右到左，返回1
+
+```lisp
+(define f   
+  (let ((init 0)) 
+    (lambda (x)  
+      (set! init (- x init))  
+      (- x init))))
+```
+
+
+
+
+
