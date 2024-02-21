@@ -716,3 +716,170 @@ acc 和 acc2 各自的local variables 存放在 各自make-account 创建的 env
 
 两者唯一共享的部分就是 global env。
 
+
+
+#### **Exercise 3.12.** 
+
+The following procedure for appending lists was introduced in section 2.2.1:
+
+```lisp
+(define (append x y)
+  (if (null? x)
+      y
+      (cons (car x) (append (cdr x) y))))
+```
+
+`Append` forms a new list by successively `cons`ing the elements of `x` onto `y`. 
+
+**The procedure `append!` is similar to `append`, but it is a mutator rather than a constructor.** 
+
+It appends the lists by splicing them together, modifying the final pair of `x` so that its `cdr` is now `y`. 
+
+(It is an error to call `append!` with an empty `x`.)
+
+```lisp
+(define (append! x y)
+  (set-cdr! (last-pair x) y)
+  x)
+```
+
+**Here `last-pair` is a procedure that returns the last pair in its argument:**
+
+```lisp
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+```
+
+Consider the interaction
+
+```lisp
+(define x (list 'a 'b))
+(define y (list 'c 'd))
+(define z (append x y))
+z
+(a b c d)
+(cdr x)
+; <response>
+; (b)
+(define w (append! x y))
+w
+(a b c d)
+(cdr x)
+; <response>
+; (b c d)
+```
+
+What are the missing <*response*>s ? 
+
+Draw box-and-pointer diagrams to explain your answer.
+
+（1）对比 append 和 append!
+
+（2）缺失的 response 是什么？
+
+（3）绘制 box-and-pointer 。
+
+
+
+`append` 不会改变原先的变量，但是 `append!` 会。
+
+
+
+
+
+#### **Exercise 3.13.** 
+
+Consider the following `make-cycle` procedure, which uses the `last-pair` procedure defined in exercise 3.12:
+
+```lisp
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+```
+
+Draw a box-and-pointer diagram that shows the structure `z` created by
+
+```lisp
+(define z (make-cycle (list 'a 'b 'c)))
+```
+
+What happens if we try to compute `(last-pair z)`?
+
+（1）使用 last-pair 定义make-cycle。
+
+（2）(last-pair z) 会发生什么？估计会死循环。
+
+```lisp
+;  ,-------------------,
+;  |                   |
+;  v                   |
+; ( . ) -> ( . ) -> ( . )
+;  |        |        |
+;  v        v        v
+;  'a       'b       'c
+```
+
+(make-cycle) 会 无限递归。
+
+
+
+#### **Exercise 3.14.** 
+
+The following procedure is quite useful, although obscure:
+
+```lisp
+(define (mystery x)
+  (define (loop x y)
+    (if (null? x)
+        y
+        (let ((temp (cdr x)))
+          (set-cdr! x y)
+          (loop temp x))))
+  (loop x '()))
+```
+
+`Loop` uses the "temporary'' variable `temp` to hold the old value of the `cdr` of `x`, since the `set-cdr!` on the next line destroys the `cdr`. 
+
+Explain what `mystery` does in general.
+
+**Suppose `v` is defined by `(define v (list 'a 'b 'c 'd))`.** 
+
+Draw the box-and-pointer diagram that represents the list to which `v` is bound. 
+
+**Suppose that we now evaluate `(define w (mystery v))`.** 
+
+Draw box-and-pointer diagrams that show the structures `v` and `w` after evaluating this expression. 
+
+What would be printed as the values of `v` and `w` ?
+
+（1）分析 mystery 这个过程。
+
+（2）使用 temp 保存 x 的cdr，原因是 set-cdr! 会丢失 原先x 的 cdr。
+
+（3）分析代码结果。
+
+```lisp
+v
+; (a)
+w
+; (d c b a)
+```
+
+w 就是原先 v 的逆序。
+
+
+
+set-cdr! 的作用就是每次将 x 的car 和 y 进行拼接，不断按照这种方式进行递归。
+
+当 x 空了，那么y就是逆序后的结果。
+
+**v 在第一次 set-cdr! 后就已经变为了 (a)，后续的过程都是在 'a 的前面进行修改。**
+
+
+
+
+
+
+
