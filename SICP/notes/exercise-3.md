@@ -879,6 +879,196 @@ set-cdr! 的作用就是每次将 x 的car 和 y 进行拼接，不断按照这�
 
 
 
+#### **Exercise 3.15.** 
+
+Draw box-and-pointer diagrams to explain the effect of `set-to-wow!` on the structures `z1` and `z2` above.
+
+```lisp
+(define x (list 'a 'b))
+(define z1 (cons x x))
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+
+(define (set-to-wow! x)
+  (set-car! (car x) 'wow)
+  x)
+z1
+; ((a b) a b)
+(set-to-wow! z1)
+;((wow b) wow b)
+
+z2
+; ((a b) a b)
+(set-to-wow! z2)
+;((wow b) a b)
+```
+
+```
+; z1 -> ( . )
+;        | |
+;        v v
+; x --> ( . ) -> ( . ) -> null
+;        |        |
+;        v        v
+;       'wow     'b
+```
+
+```
+; z2 -> ( . ) -> ( . ) -> ( . ) -> null
+;        |        |        |
+;        |        v        v
+;        |       'a       'b
+;        |                 ^
+;        |                 |
+;        `-----> ( . ) -> ( . ) -> null
+;                 |
+;                 v
+;                'wow
+```
+
+```
+(set-car! (car x) 'wow)
+```
+
+其实就是将x的car指针所指向的地方修改为'wow
+
+
+
+#### **Exercise 3.16.** 
+
+Ben Bitdiddle decides to write a procedure to count **the number of pairs in any list structure.**
+
+It's "easy," he reasons. "The number of pairs in any structure is the number in the `car` plus the number in the `cdr` plus one more to count the current pair.'' 
+
+So Ben writes the following procedure:
+
+```lisp
+(define (count-pairs x)
+  (if (not (pair? x))
+      0
+      (+ (count-pairs (car x))
+         (count-pairs (cdr x))
+         1)))
+```
+
+Show that this procedure is not correct. 
+
+In particular, draw box-and-pointer diagrams representing list structures made up of **exactly three pairs for which Ben's procedure would return 3; return 4; return 7; never return at all.**
+
+
+
+（1）计算任意list中pair的个数？
+
+（2）构造四个只有3个pair的list，让其过程返回3 4 7 死循环
+
+
+
+出现不同结果的本质原因是 pair 可以被共享，出现了重复计数
+
+
+
+死循环就是构造最后一个指针向前指，即出现“环”
+
+
+
+#### **Exercise 3.17.** 
+
+Devise a correct version of the `count-pairs` procedure of exercise 3.16 that returns the number of distinct pairs in any structure. 
+
+(Hint: Traverse the structure, maintaining an **auxiliary data structure** that is used to keep track of which pairs have already been counted.)
+
+修正 3.16 的代码，可以使用辅助数据结构跟踪那些pair已经被计数。
+
+
+
+使用什么数据结构？怎么得到一个pair的唯一标记？
+
+可以直接使用一个list即可，可以通过memq过程来判断一个pair是否在一个list中。
+
+```lisp
+(define (memq item x)
+  (cond ((null? x) false)
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
+(memq 'apple '(pear banana prune))
+; false
+(memq 'apple '(x (apple sauce) y apple pear))
+; (apple pear)
+```
+
+```lisp
+(define (count-pairs x)
+  (let ((vis nil))
+    (define (iter x)
+      (if (or (not (pair? x)) (memq x vis))
+          0
+          (begin (set! vis (cons x vis))
+                 (+ (iter (car x))
+                    (iter (cdr x))
+                    1))
+          )
+      )
+    (iter x)
+    )
+  )
+```
+
+
+
+#### **Exercise 3.18.** 
+
+Write a procedure that examines a list and determines whether it contains a cycle, that is, **whether a program that tried to find the end of the list by taking successive `cdr`s would go into an infinite loop.** 
+
+Exercise 3.13 constructed such lists.
+
+写一个过程，确定一个list是否包含 一个 cycle？。
+
+这里只需要看 cdr 即可，不用看 car，虽然连续的car也可能造成cycle。
+
+
+
+#### **Exercise 3.19.** 
+
+Redo exercise 3.18 using an algorithm **that takes only a constant amount of space.** 
+
+(This requires a very clever idea.)
+
+只用常数空间复杂度的算法实现 3.18 
+
+不会是快慢指针的思路把？
+
+This is a well studied problem. Robert Floyd came up with an algorithm to solve this in the 1960s. 
+
+**(Yes, the same Floyd of the from the more famous Floyd-Warshall algorithm.)** 
+
+More infomation at: http://en.wikipedia.org/wiki/Cycle_detection
+
+
+
+设置两个指针，一个每次移动一个pair，一个每次移动两个pair
+
+如果发现某个时刻两个指针指向的pair相同，那么就存在cycle
+
+为了加速找到答案，如果在中途发现 快指针和慢指针只有一个pair的距离就相同了，那么也说明存在cycle。
+
+```lisp
+(define (exist-cycle? x) 
+  (define (scdr l) 
+    (if (pair? l) 
+        (cdr l) 
+        nil )) 
+  (define (iter a b) 
+    (cond ((not (pair? a)) #f) 
+          ((not (pair? b)) #f) 
+          ((eq? a b) #t) 
+          ((eq? a (scdr b)) #t) 
+          (else (iter (scdr a) (scdr (scdr b)))))) 
+  (iter (scdr x) (scdr (scdr x))))
+```
+
+scdr 就是 safe-cdr 的简写
+
+
+
 
 
 
