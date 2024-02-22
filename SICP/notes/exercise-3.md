@@ -1069,6 +1069,51 @@ scdr 就是 safe-cdr 的简写
 
 
 
+#### **Exercise 3.20.** 
+
+Draw environment diagrams to **illustrate the evaluation of the sequence of expressions**
+
+```lisp
+(define x (cons 1 2))
+(define z (cons x x))
+(set-car! (cdr z) 17)
+(car x)
+; 17
+```
+
+using the procedural implementation of pairs given above. (Compare exercise 3.11.)
+
+利用 mutation pair 的定义绘制 上面过程的 **env 图**。
+
+```lisp
+(define (cons x y)
+  (define (set-x! v) (set! x v))
+  (define (set-y! v) (set! y v))
+  (define (dispatch m)
+    (cond ((eq? m 'car) x)
+          ((eq? m 'cdr) y)
+          ((eq? m 'set-car!) set-x!)
+          ((eq? m 'set-cdr!) set-y!)
+          (else (error "Undefined operation -- CONS" m))))
+  dispatch)
+(define (car z) (z 'car))
+(define (cdr z) (z 'cdr))
+(define (set-car! z new-value)
+  ((z 'set-car!) new-value)
+  z)
+(define (set-cdr! z new-value)
+  ((z 'set-cdr!) new-value)
+  z)
+```
+
+每次evaluate一个过程就会出现一个新的env
+
+cons 其实就是构建了一个有局部变量 x 和 y 的env
+
+x z 等构造的pair本体就是dispatch，只不过其 env pointer 指向的是cons创建的env。
+
+
+
 
 
 
