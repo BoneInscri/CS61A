@@ -1116,5 +1116,98 @@ x z 等构造的pair本体就是dispatch，只不过其 env pointer 指向的是
 
 
 
+#### **Exercise 3.21.** 
+
+Ben Bitdiddle decides to test the queue implementation described above. 
+
+He types in the procedures to the Lisp interpreter and proceeds to try them out:
+
+```lisp
+(define q1 (make-queue))
+(insert-queue! q1 'a)
+((a) a)
+(insert-queue! q1 'b)
+((a b) b)
+(delete-queue! q1)
+((b) b)
+(delete-queue! q1)
+(() b)
+```
+
+"It's all wrong!" he complains. "The interpreter's response shows that the last item is inserted into the queue twice. 
+
+And when I delete both items, the second `b` is still there, so the queue isn't empty, even though it's supposed to be.'' Eva Lu Ator suggests that Ben has misunderstood what is happening. 
+
+**"It's not that the items are going into the queue twice," she explains."**
+
+**It's just that the standard Lisp printer doesn't know how to make sense of the queue representation.** 
+
+If you want to see the queue printed correctly, you'll have to define your own print procedure for queues.'' Explain what Eva Lu is talking about. 
+
+In particular, show why Ben's examples produce the printed results that they do. 
+
+**Define a procedure `print-queue` that takes a queue as input and prints the sequence of items in the queue**
+
+（1）解释以下为什么需要自己实现 print-queue？
+
+（2）自己实现print-queue
+
+
+
+queue 的 car 是front-ptr，cdr 是rear-ptr，如果想print-queue，直接输出 (car queue) 即可
+
+
+
+#### **Exercise 3.22.** 
+
+Instead of representing a queue as a pair of pointers, **we can build a queue as a procedure with local state.** 
+
+The local state will consist of pointers to the beginning and the end of an ordinary list. 
+
+Thus, the `make-queue` procedure will have the form
+
+```lisp
+(define (make-queue)
+  (let ((front-ptr ...)
+        (rear-ptr ...))
+    <definitions of internal procedures>
+    (define (dispatch m) ...)
+    dispatch))
+```
+
+Complete the definition of `make-queue` and provide implementations of the queue operations using this representation.
+
+构造具有 local state 的queue实现。
+
+
+
+#### **Exercise 3.23.** 
+
+A *deque* ("double-ended queue'') is a sequence in which **items can be inserted and deleted at either the front or the rear.** 
+
+Operations on deques are the constructor `make-deque`, the predicate `empty-deque?`, selectors `front-deque` and `rear-deque`, and mutators `front-insert-deque!`, `rear-insert-deque!`, `front-delete-deque!`, and `rear-delete-deque!`. 
+
+Show how to represent deques using pairs, and give implementations of the operations.
+
+All operations should be accomplished in $\theta(1)$ steps.
+
+（1）实现deque，可以在front 和 rear 插入和删除
+
+（2）使用 pairs 实现 make-deque、empty-deque?、front-deque、rear-deque、front-insert-deque!、rear-insert-deque!、front-delete-deque!和rear-delete-deque!
+
+（3）保证过程的复杂度是 $\theta(1)$
+
+
+
+
+
+最大的问题是 rear-delete-deque!，如何得到rear的前一个？
+
+最好的办法就是弄一个 双向list
+
+
+
+
+
 
 
