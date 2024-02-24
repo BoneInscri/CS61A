@@ -1207,7 +1207,35 @@ All operations should be accomplished in $\theta(1)$ steps.
 
 
 
+#### **Exercise 3.24.** 
+
+In the table implementations above, **the keys are tested for equality using `equal?` (called by `assoc`).** 
+
+This is not always the appropriate test. 
+
+For instance, **we might have a table with numeric keys in which we don't need an exact match to the number we're looking up, but only a number within some tolerance of it.** 
+
+Design a table constructor `make-table` that takes **as an argument a `same-key?` procedure that will be used to test "equality" of keys.** 
+
+"make-table" should return a "dispatch" procedure that can be used to access appropriate "lookup" and "insert!" procedures for a local table.
 
 
 
+（1）assoc 通过 equal? 对 key 进行检验。
+
+（2）实现 same-key?
+
+
+
+#### **Exercise 3.25.** 
+
+Generalizing one- and two-dimensional tables, **show how to implement a table in which values are stored under an arbitrary number of keys and different values may be stored under different numbers of keys.** 
+
+The `lookup` and `insert!` procedures should take as input a list of keys used to access the table.
+
+根据一维表和二维表的结构，将代码扩展为**多维表的结构**。
+
+
+
+用可变参数！
 
