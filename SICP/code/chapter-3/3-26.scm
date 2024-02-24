@@ -1,11 +1,48 @@
 #lang sicp
 
-(define (make-table dim same-key?)
+; binary tree
+(define (entry tree) (car tree))
+(define (left-branch tree) (cadr tree))
+(define (right-branch tree) (caddr tree))
+(define (make-tree entry left right)
+  (list entry left right))
+
+; x-dim table
+(define (make-table dim same-key? less-key? greater-key?)
   (let ((local-table (list '*table*)))
-    (define (assoc key records)
+    (define (key r)
+      (car r))
+    ; 1-d table(binary tree) lookup 
+    (define (assoc given-key records)
       (cond ((null? records) false)
-            ((same-key? key (caar records)) (car records))
-            (else (assoc key (cdr records)))))
+            ((same-key? given-key (key (entry records)))
+             (entry records)
+             )
+            ((less-key? given-key (key (entry records)))
+             (assoc given-key (left-branch records))
+             )
+            ((greater-key? given-key (key (entry records)))
+             (assoc given-key (right-branch records))
+             )
+            )
+      )
+    ; 1-d table(binary tree) insert
+    (define (adjoin-set given-record records)
+      (cond ((null? records) (make-tree given-record nil nil))
+            ((same-key? (key given-record)
+                        (key (entry records)))
+             records)
+            ((less-key? (key given-record)
+                        (key (entry records)))
+             (make-tree (entry records) 
+                        (adjoin-set given-record (left-branch records))
+                        (right-branch records)))
+            ((greater-key? (key given-record)
+                           (key (entry records)))
+             (make-tree (entry records)
+                        (left-branch records)
+                        (adjoin-set given-record (right-branch records)))))
+      )
     
     (define (lookup . key)
       (define (lookup-iter key-list table)
@@ -54,14 +91,16 @@
         (split-key-value key-value)
         (set! new-pair (cons key-last value))
         (if (= key-num 1)
-            (set! key-value nil)
+            (set! key-value nil); bug!!!
             )
-        ; helper
+
+        ; helper (pay attention to)!!!
         (define (make-kdim-table key-p)
           (define (kdim-table key-list)
             (if (null? key-list)
                 new-pair
-                (list (car key-list) (kdim-table (cdr key-list)))
+                (cons (car key-list)
+                      (make-tree (kdim-table (cdr key-list)) nil nil) )
                 )
             )
           (kdim-table key-p)
@@ -73,8 +112,10 @@
                 (if record
                     (set-cdr! record value)
                     (set-cdr! table
-                            (cons new-pair
-                                  (cdr table)))
+                              (adjoin-set new-pair (cdr table))
+                              ;(cons new-pair
+                              ;      (cdr table))
+                            )
                     )
                 )
               ; otherwise
@@ -83,7 +124,8 @@
                      )
                 (if sub-table
                     (insert!-iter (cdr key-list) sub-table)
-                    (set-cdr! table (cons (make-kdim-table key-list) (cdr table)))
+                    ;(set-cdr! table (cons (make-kdim-table key-list) (cdr table)))
+                    (set-cdr! table (adjoin-set (make-kdim-table key-list) (cdr table)))
                     )
                 )
               )
@@ -102,24 +144,17 @@
             ((eq? m 'print-proc) print-proc)
             (else (error "Unknown operation -- TABLE" m))))
     dispatch))
+
 (define dim 1)
-(define operation-table (make-table dim equal?)) 
+(define operation-table (make-table dim equal? < >)) 
 (define get (operation-table 'lookup-proc)) 
 (define put (operation-table 'insert-proc!))
 (define print-table (operation-table 'print-proc))
-  
-; test 
-;(put 10 10 13 'hello)
-;(put 11 12 15 'world)
-;(put 11 12 14 'mygod)
-;(put 11 13 16 'mygod)
-;(put 11 13 17 'ohhhh)
-;(put 11 13 16 'wooow)
-;(get 10 10 13)
-;(get 11 12 15)
-;(get 11 13 16)
-;(get 11 13 17)
 
 (put 10 'hello)
 (put 12 'world)
+(put 13 'hhho)
+(get 12)
+(get 13)
 (get 10)
+(get 15)
