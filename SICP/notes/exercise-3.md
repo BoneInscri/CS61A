@@ -1347,6 +1347,30 @@ Define a procedure `or-gate` that accomplishes this.
 
 （2）使用不同方法构建的or-gate的延迟有什么区别？
 
+1.  x & y，如果是1，表示x和y都是1，如果是0，表示x和y至少有一个是0
+2.  x | y，如果是1，表示x和y至少有一个是1，如果是0，表示x和y都是0
+
+**b = ~ ( (~x) & (~y) ) = x | y**
+
+如果 b 为 0，那么表示 x 和 y都是 0，对应的 x | y = 0
+
+其实就是用德摩根律
+
+```lisp
+; 如果延迟：
+(define inverter-delay 2)
+(define and-gate-delay 3)
+(define or-gate-delay 5)
+```
+
+那么新构建的or-gate延迟就是 2 + 3 + 2 = 7
+
+主要取决于 and-gate-delay 和 inverter-delay
+
+
+
+
+
 
 
 #### **Exercise 3.30.** 

@@ -125,10 +125,6 @@
         (front-queue (segment-queue first-seg)))))
 
 ; propagate and delay
-(define inverter-delay 2)
-(define and-gate-delay 3)
-(define or-gate-delay 5)
-
 (define (after-delay delay action)
   (add-to-agenda! (+ delay (current-time the-agenda))
                   action
@@ -139,7 +135,9 @@
       (let ((first-item (first-agenda-item the-agenda)))
         (first-item)
         (remove-first-agenda-item! the-agenda)
-        (propagate))))
+        (propagate))
+      )
+  )
 
 ; probe
 (define (probe name wire)
@@ -213,6 +211,20 @@
   'set-or-gate-ok
   )
 
+; or-gate using and-gates and inverters
+(define (or-gate-slow a1 a2 output)
+  (let ((neg-a1 (make-wire))
+        (neg-a2 (make-wire))
+        (and-two-neg (make-wire))
+        )
+    (inverter a1 neg-a1)
+    (inverter a2 neg-a2)
+    (and-gate neg-a1 neg-a2 and-two-neg)
+    (inverter and-two-neg output)
+    'set-or-gate-slow-ok
+    )
+  )
+
 ; half-adder
 (define (half-adder a b s c)
   (let ((d (make-wire)) (e (make-wire)))
@@ -232,21 +244,44 @@
     (or-gate c1 c2 c-out)
     'set-full-adder-ok))
 
-; test for 3-28
+; agenda and delay
 (define the-agenda (make-agenda))
+(define inverter-delay 2)
+(define and-gate-delay 3)
+(define or-gate-delay 5)
 
+; test for 3-28
+
+;(define input-1 (make-wire))
+;(define input-2 (make-wire))
+;(define output (make-wire))
+
+;(probe 'output output)
+
+;(or-gate input-1 input-2 output)
+
+;(set-signal! input-1 1)
+;(set-signal! input-2 0)
+;(propagate)
+;(set-signal! input-1 0)
+;(set-signal! input-2 0)
+;(propagate)
+
+
+; test for 3-29
 (define input-1 (make-wire))
 (define input-2 (make-wire))
 (define output (make-wire))
 
+(or-gate-slow input-1 input-2 output)
 (probe 'output output)
 
-(or-gate input-1 input-2 output)
-
 (set-signal! input-1 1)
-(set-signal! input-2 0)
+(set-signal! input-2 1)
 (propagate)
 (set-signal! input-1 0)
 (set-signal! input-2 0)
 (propagate)
-
+(set-signal! input-1 1)
+(set-signal! input-2 0)
+(propagate)
