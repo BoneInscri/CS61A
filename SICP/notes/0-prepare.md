@@ -31,6 +31,12 @@ https://blog.csdn.net/weixin_40827685/article/details/109751129
 
 
 
+DrRacket 的输出在右侧，如何修改为在下侧？
+
+<img src="0-prepare.assets/image-20240225124712763.png" alt="image-20240225124712763" style="zoom:50%;" />
+
+
+
 
 
 记得安装 sicp 的package
@@ -70,10 +76,6 @@ https://sicp-solutions.net/
 files-viewer
 
 https://github.com/MatrixForChange/files-viewer
-
-
-
-
 
 
 

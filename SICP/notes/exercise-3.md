@@ -1325,7 +1325,94 @@ Would the scheme still work if we had simply defined `memo-fib` to be `(memoize 
 
 
 
+#### **Exercise 3.28.** 
 
+Define an or-gate as a primitive function box. 
+
+Your `or-gate` constructor should be similar to `and-gate`.
+
+实现 或门
+
+
+
+#### **Exercise 3.29.** 
+
+Another way to construct an or-gate is as a compound digital logic device, built from and-gates and inverters. 
+
+Define a procedure `or-gate` that accomplishes this. 
+
+**What is the delay time of the or-gate in terms of `and-gate-delay` and `inverter-delay`?**
+
+（1）使用and-gates和inverters构建or-gate
+
+（2）使用不同方法构建的or-gate的延迟有什么区别？
+
+
+
+#### **Exercise 3.30.** 
+
+Figure 3.27 shows a *ripple-carry adder* formed **by stringing together *n* full-adders.** 
+
+<img src="exercise-3.assets/image-20240225110311003.png" alt="image-20240225110311003" style="zoom:67%;" />
+
+This is the simplest form of **parallel adder** for adding two *n*-bit binary numbers. 
+
+The inputs A1, A2, A3, `...`, A*n* and B1, B2, B3, `...`, B*n* are the two binary numbers to be added (each A*k* and B*k* is a 0 or a 1). 
+
+The circuit generates S1, S2, S3, `...`, S*n*, the *n* bits of the sum, and C, the carry from the addition. 
+
+**Write a procedure `ripple-carry-adder` that generates this circuit.** 
+
+The procedure should take as arguments three lists of *n* wires each -- the A*k*, the B*k*, and the S*k* -- and also another wire C. 
+
+**The major drawback of the ripple-carry adder is the need to wait for the carry signals to propagate.** 
+
+What is the delay needed to obtain the complete output from an *n*-bit ripple-carry adder, **expressed in terms of the delays for and-gates, or-gates, and inverters?**
+
+（1）将 n 个全加器串连在一起就可以构成一个n位加法器
+
+（2）S1～Sn 是求和的结果，C是加法的进位
+
+（3）需要等待进位，所以延迟大
+
+（4）用and-gate、or-gate和inverter的延迟表示这个ripple-carry adder的延迟有多大？
+
+
+
+#### **Exercise 3.31.**  
+
+The internal procedure `accept-action-procedure!` defined in `make-wire` specifies that **when a new action procedure is added to a wire, the procedure is immediately run.** 
+
+Explain why this initialization is necessary. 
+
+In particular, trace through the half-adder example in the paragraphs above and **say how the system's response would differ if we had defined `accept-action-procedure!` as**
+
+```lisp
+(define (accept-action-procedure! proc)
+  (set! action-procedures (cons proc action-procedures)))
+```
+
+（1）make-wire中的accept-action-procedure!在一个新的过程添加到wire时，**过程会立刻执行**
+
+解释为什么需要这个初始化？
+
+（2）如果修改accept-action-procedure!如上面代码，会发生什么？有什么不同？
+
+
+
+#### **Exercise 3.32.** 
+
+The procedures to be run during each time segment of the agenda are kept in a queue. 
+
+Thus, the procedures for each segment are called in the order in which they were added to the agenda **(first in, first out).** 
+
+**Explain why this order must be used.** 
+
+In particular, trace the behavior of an and-gate whose inputs change from 0,1 to 1,0 in the same segment and say how the behavior would differ if we stored a segment's procedures in an ordinary list, adding and removing procedures only at the front (last in, first out).
+
+（1）为什么需要将agenda的时间片的过程设置为queue的顺序？
+
+（2）如果采用后进先出会怎样？
 
 
 
