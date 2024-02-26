@@ -53,8 +53,7 @@
           'set-my-signal-is-done))
     (define (accept-action-procedure! proc)
       (set! action-procedures (cons proc action-procedures))
-      (proc)
-      )
+      (proc))
     (define (dispatch m)
       (cond ((eq? m 'get-signal) signal-value)
             ((eq? m 'set-signal!) set-my-signal!)
@@ -163,8 +162,6 @@
           ((= s 1) 0)
           (else (error "inverter, invalid signal" s))))
   (define (invert-input)
-    ;(display "trigger invert")
-    ;(newline)
     (let ((new-value (logical-not (get-signal input))))
       (after-delay inverter-delay
                    (lambda ()
@@ -184,8 +181,6 @@
                ) 0)
           (else (error "and-gate, invalid signal" x y))))
   (define (and-action-procedure)
-    ;(display "trigger and-gate")
-    ;(newline)
     (let ((new-value
            (logical-and (get-signal a1) (get-signal a2))))
       (after-delay and-gate-delay
@@ -206,8 +201,6 @@
                ) 1)
           (else (error "or-gate, invalid signal" x y))))
   (define (or-action-procedure)
-    ;(display "trigger or-gate")
-    ;(newline)
     (let ((new-value
            (logical-or (get-signal a1) (get-signal a2))))
       (after-delay or-gate-delay
@@ -251,29 +244,6 @@
     (or-gate c1 c2 c-out)
     'set-full-adder-ok))
 
-; ripple-carry-adder
-(define (ripple-carry-adder Ak Bk Sk C)
-  (let ((A-n (length Ak))
-        (B-n (length Bk))
-        (S-n (length Sk))
-        )
-    
-    (define (ripple-carry-adder-iter Ai Bi Si Ci)
-      (if (null? Ai)
-          'set-ripple-carry-adder-ok
-          (let ((C-next (make-wire)))
-            (full-adder (car Ai) (car Bi) Ci (car Si) C-next)
-            (ripple-carry-adder-iter (cdr Ai) (cdr Bi) (cdr Si) C-next)
-            )
-          )
-      )
-    (if (= A-n B-n S-n)
-        (ripple-carry-adder-iter Ak Bk Sk C)
-        (error "number of wires is error")
-        )
-    )
-  )
-
 ; agenda and delay
 (define the-agenda (make-agenda))
 (define inverter-delay 2)
@@ -299,61 +269,19 @@
 
 
 ; test for 3-29
-;(define input-1 (make-wire))
-;(define input-2 (make-wire))
-;(define output (make-wire))
-
-;(or-gate-slow input-1 input-2 output)
-;(probe 'output output)
-
-;(set-signal! input-1 1)
-;(set-signal! input-2 1)
-;(propagate)
-;(set-signal! input-1 0)
-;(set-signal! input-2 0)
-;(propagate)
-;(set-signal! input-1 1)
-;(set-signal! input-2 0)
-;(propagate)
-
-; test for 3-30
-; 构造排线
-;(define (build-wires input-signals) 
-;  (if (null? input-signals) 
-;      nil 
-;      (let ((new-wire (make-wire))) 
-;        (set-signal! new-wire (car input-signals)) 
-;        (cons new-wire (build-wires (cdr input-signals)))))) 
-; 将排线转化为二进制信号         
-;(define (get-signals wires) 
-;  (map (lambda (w) (get-signal w)) wires)) 
-  
-;(define (to-binary number) 
-;  (if  (< number 2) 
-;       (list number) 
-;       (cons (remainder number 2) (to-binary (/ number 2)) )))
-
-;(define a (build-wires '(0 0 1 0 0 0))) ;;4 
-;(define b (build-wires '(1 1 0 1 0 0))) ;;11 
-;(define s (build-wires '(0 0 0 0 0 0))) 
-;(define c-in (make-wire)) 
-;(ripple-carry-adder a b s c-in) 
-
-;(propagate) 
-;(get-signals s)
-
-; 注意，这里的a b s 从左到右是依次低位到高位变化
-
-; test for 3-32
 (define input-1 (make-wire))
 (define input-2 (make-wire))
 (define output (make-wire))
 
+(or-gate-slow input-1 input-2 output)
 (probe 'output output)
 
-(and-gate input-1 input-2 output)
-(set-signal! input-1 0)
+(set-signal! input-1 1)
 (set-signal! input-2 1)
+(propagate)
+(set-signal! input-1 0)
+(set-signal! input-2 0)
+(propagate)
 (set-signal! input-1 1)
 (set-signal! input-2 0)
 (propagate)

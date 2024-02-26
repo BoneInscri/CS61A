@@ -1395,11 +1395,75 @@ What is the delay needed to obtain the complete output from an *n*-bit ripple-ca
 
 （1）将 n 个全加器串连在一起就可以构成一个n位加法器
 
-（2）S1～Sn 是求和的结果，C是加法的进位
+（2）S1～Sn 是求和的结果，C是加法的进位，实现 ripple-carry-adder
 
 （3）需要等待进位，所以延迟大
 
 （4）用and-gate、or-gate和inverter的延迟表示这个ripple-carry adder的延迟有多大？
+
+
+
+n 个 全加器的延迟？
+
+一个全加器的延迟是 两个半加器的延迟+一个or-gate的延迟。
+
+这里要看  C-n 的延迟和 S-n 的延迟，是一个递归关系。
+
+<img src="exercise-3.assets/image-20240226110413462.png" alt="image-20240226110413462" style="zoom:50%;" />
+
+<img src="exercise-3.assets/image-20240226110422563.png" alt="image-20240226110422563" style="zoom:50%;" />
+
+（1）C-n
+
+ ```lisp
+ C-n-delay = 
+ (+ Cn-1-delay
+    (* 2 and-gate-delay)
+    or-gate-delay
+    (max or-gate-delay
+         (+ and-gate-delay
+            inverter-delay)))
+ C-0-delay = 0
+ ```
+
+```lisp
+C-n-delay = 
+(+ (* 2 n and-gate-delay)
+   (* n or-gate-delay)
+   (* n (max or-gate-delay
+             (+ and-gate-delay
+                inverter-delay)))
+```
+
+
+
+（2）S-n
+
+```lisp
+S-n-delay = 
+(+ Cn-1-delay
+   (* 2 
+      and-gate-delay)
+   (* 2
+      (max or-gate-delay
+           (+ and-gate-delay
+              inverter-delay))))
+```
+
+```lisp
+S-n-delay = 
+(+ (* 2 n and-gate-delay)
+   (* (- n 1) or-gate-delay)
+   (* (+ n 1) (max or-gate-delay
+                   (+ and-gate-delay
+                      inverter-delay)))
+```
+
+
+
+延迟主要取决于 C-n-1
+
+
 
 
 
@@ -1422,6 +1486,14 @@ In particular, trace through the half-adder example in the paragraphs above and 
 
 （2）如果修改accept-action-procedure!如上面代码，会发生什么？有什么不同？
 
+如果不立刻执行这个过程，那么名 after-delay无法执行，也就是这个action无法添加到agenda中。
+
+对于我们的事件驱动系统，它需要改变线路的比特来触发一个动作(inverter，and，or，等等)。**但是，当所有连接初始化为0时，将不会触发任何操作。因此，我们需要在初始化阶段手动触发这些操作。**
+
+为了在初始化的时候手动触发，然后所有的wire初始化为0，通过逻辑门得到输出结果。
+
+
+
 
 
 #### **Exercise 3.32.** 
@@ -1437,6 +1509,26 @@ In particular, trace the behavior of an and-gate whose inputs change from 0,1 to
 （1）为什么需要将agenda的时间片的过程设置为queue的顺序？
 
 （2）如果采用后进先出会怎样？
+
+
+
+更改一个wire的signal，那么就会造成一连串的修改
+
+这个修改必须要FIFO，按照顺序依次进行
+
+
+
+总结一下如何用软件模拟逻辑门硬件？
+
+（1）通过多个wire将逻辑门进行连接
+
+（2）每个逻辑门的wire一旦连接，就会给每个wire的回调函数list新增一个action
+
+（3）设置一个agenda，某个时刻修改了一个wire的signal，那么就会将wire的信号修改为新的signal，然后遍历回调函数list，执行每个函数。
+
+（4）每一个回调函数都是将一个时间片放入agenda中，通过propagate依次执行agenda中的action。
+
+
 
 
 
