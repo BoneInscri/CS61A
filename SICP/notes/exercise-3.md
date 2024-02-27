@@ -1659,6 +1659,8 @@ Draw an environment diagram showing the environment in which the above expressio
 
 
 
+
+
 #### **Exercise 3.37.** 
 
 The `celsius-fahrenheit-converter` procedure is cumbersome when compared with a more expression-oriented style of definition, such as
@@ -1706,6 +1708,62 @@ Define analogous procedures `c-`, `c*`, `c/`, and `cv` (constant value) that ena
 ```lisp
 (define answer (v-prod (v-sum a b) (v-sum c d)))
 ```
+
+
+
+
+
+#### **Exercise 3.38.** 
+
+Suppose that Peter, Paul, and Mary share a joint bank account that initially contains 100. 
+
+Concurrently, Peter deposits $10, Paul withdraws \$20, and Mary withdraws half the money in the account, by executing the following commands:
+
+| name:  | operation                                  |
+| ------ | ------------------------------------------ |
+| Peter: | `(set! balance (+ balance 10))`            |
+| Paul:  | `(set! balance (- balance 20))`            |
+| Mary:  | `(set! balance (- balance (/ balance 2)))` |
+
+a. List all the different possible values for `balance` after these three transactions have been completed, assuming that the banking system forces the three processes to run sequentially in some order.
+
+b. **What are some other values that could be produced if the system allows the processes to be interleaved?** Draw timing diagrams like the one in figure 3.29 to explain how these values can occur.
+
+
+
+（1）Peter、Paul和Mary共享一个account
+
+（2）按照上面的顺序进行操作
+
+（3）如果没有数据竞争，没有过程交叉，强制按照某种顺序，有那些可能？
+$$
+A_3^3=3*2=6
+$$
+
+```
+45: Peter +10; Paul -20; Mary /2
+35: Peter +10; Mary /2; Paul -20
+45: Paul -20; Peter +10; Mary /2
+50: Paul -20; Mary /2; Peter +10
+40: Mary /2; Peter +10; Paul -20
+40: Mary /2; Paul -20; Peter +10
+```
+
+（4）如果允许过程交叉进行呢？
+
+Peter、Paul和Mary 每个人的**set!**都是 三个步骤：
+
+读、计算、写
+
+
+
+那么其实就是 9 个步骤进行排列，但是一个过程中的三个子过程只有一个顺序，顺序不能错。
+$$
+\frac{A_9^9}{A_3^3A_3^3A_3^3}=\frac{9!}{3!3!3!}
+$$
+除以 $A_3^3$ 的过程就是 去序！
+
+
 
 
 
