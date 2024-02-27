@@ -1565,7 +1565,9 @@ $$
 
 知道 a 可以十分容易推出 b，但是知道b无法推出a，
 
-实际上对b开根号就可以得到a，但是却得不到
+**实际上对b开根号就可以得到a，但是按照上面的写法构建约束系统却得不到正确结果**
+
+Because in procedure multiplier, you only  have (has-value? b) true,  **m1, m2 are not set, even they are the same, but multiplier doesn't know that**. 
 
 
 
@@ -1594,6 +1596,44 @@ Fill in the missing portions in Ben's outline for a procedure to implement such 
 如何解决3-34的问题？
 
 使用原始的定义，不要用multiplier定义。
+
+下面给出 multiplier 的过程描述，仿造 multiplier 编写 squarer
+
+```lisp
+(define (multiplier m1 m2 product)
+  (define (process-new-value)
+    (cond ((or (and (has-value? m1) (= (get-value m1) 0))
+               (and (has-value? m2) (= (get-value m2) 0)))
+           (set-value! product 0 me))
+          ((and (has-value? m1) (has-value? m2))
+           (set-value! product
+                       (* (get-value m1) (get-value m2))
+                       me))
+          ((and (has-value? product) (has-value? m1))
+           (set-value! m2
+                       (/ (get-value product) (get-value m1))
+                       me))
+          ((and (has-value? product) (has-value? m2))
+           (set-value! m1
+                       (/ (get-value product) (get-value m2))
+                       me))))
+  (define (process-forget-value)
+    (forget-value! product me)
+    (forget-value! m1 me)
+    (forget-value! m2 me)
+    (process-new-value))
+  (define (me request)
+    (cond ((eq? request 'I-have-a-value)
+           (process-new-value))
+          ((eq? request 'I-lost-my-value)
+           (process-forget-value))
+          (else
+           (error "Unknown request -- MULTIPLIER" request))))
+  (connect m1 me)
+  (connect m2 me)
+  (connect product me)
+  me)
+```
 
 
 
