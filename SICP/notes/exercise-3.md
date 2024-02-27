@@ -1637,8 +1637,6 @@ Fill in the missing portions in Ben's outline for a procedure to implement such 
 
 
 
-
-
 #### **Exercise 3.36.** 
 
 Suppose we evaluate the following sequence of expressions in the global environment:
@@ -1687,11 +1685,11 @@ For example, `c+` takes two connectors as arguments and returns a connector that
 
 Define analogous procedures `c-`, `c*`, `c/`, and `cv` (constant value) that enable us to define compound constraints as in the converter example above.
 
-（1）实现c-、c*和c/
+（1）实现c-、c*、c/和 cv
 
-（2）让上面的`celsius-fahrenheit-converter`是正确的
+（2）让上面的`celsius-fahrenheit-converter`正常运行
 
-
+最大的好处就是不需要写一堆局部变量了！
 
 
 
@@ -1708,4 +1706,8 @@ Define analogous procedures `c-`, `c*`, `c/`, and `cv` (constant value) that ena
 ```lisp
 (define answer (v-prod (v-sum a b) (v-sum c d)))
 ```
+
+
+
+
 
