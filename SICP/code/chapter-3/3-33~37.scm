@@ -166,24 +166,36 @@
   me)
 
 ; test for 3-33
+;(define a (make-connector))
+;(define b (make-connector))
+;(define c (make-connector))
+
+;(define (averager a b c)
+;  (let ((u (make-connector))
+;        (v (make-connector))
+;        )
+;    (multiplier c u v)
+;    (adder a b v)
+;    (constant 2 u)
+;    'set-averager-ok
+;    )
+;  )
+
+;(averager a b c)
+;(define probe-c (probe "average temp" c))
+
+;(set-value! a 20 'user)
+;(set-value! b 40 'user)
+
+; test for 3-34
 (define a (make-connector))
 (define b (make-connector))
-(define c (make-connector))
 
-(define (averager a b c)
-  (let ((u (make-connector))
-        (v (make-connector))
-        )
-    (multiplier c u v)
-    (adder a b v)
-    (constant 2 u)
-    'set-averager-ok
-    )
-  )
+(define (squarer a b) (multiplier a a b))
+(squarer a b)
 
-(averager a b c)
-(define probe-c (probe "average temp" c))
+(define probe-a (probe "squarer a" a))
+(define probe-b (probe "squarer b" b))
 
-(set-value! a 20 'user)
-(set-value! b 40 'user)
-
+(set-value! a 2 'user)
+;(set-value! b 2 'user)
