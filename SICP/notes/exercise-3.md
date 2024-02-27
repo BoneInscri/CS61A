@@ -1532,3 +1532,134 @@ In particular, trace the behavior of an and-gate whose inputs change from 0,1 to
 
 
 
+#### **Exercise 3.33.** 
+
+Using primitive multiplier, adder, and constant constraints, **define a procedure `averager` that takes three connectors `a`, `b`, and `c` as inputs and establishes the constraint that the value of `c` is the average of the values of `a` and `b`.**
+
+构建约束系统
+$$
+c=(a+b)/2\\
+2*c=(a+b)
+$$
+
+
+#### **Exercise 3.34.** 
+
+Louis Reasoner wants to build a **squarer**, a constraint device with two terminals such that the value of connector `b` on the second terminal will always be the square of the value `a` on the first terminal. 
+
+He proposes the following simple device made from a multiplier:
+
+```
+(define (squarer a b) (multiplier a a b))
+```
+
+There is a serious flaw in this idea. 
+
+Explain.
+
+构建约束系统
+$$
+b=a^2
+$$
+有一个典型的缺陷？是什么？
+
+
+
+#### **Exercise 3.35.** 
+
+Ben Bitdiddle tells Louis that one way to avoid the trouble in exercise 3.34 is to define a squarer as a new primitive constraint. 
+
+Fill in the missing portions in Ben's outline for a procedure to implement such a constraint:
+
+```lisp
+(define (squarer a b)
+  (define (process-new-value)
+    (if (has-value? b)
+        (if (< (get-value b) 0)
+            (error "square less than 0 -- SQUARER" (get-value b))
+            <alternative1>)
+        <alternative2>))
+  (define (process-forget-value) <body1>)
+  (define (me request) <body2>)
+  <rest of definition>
+  me)
+```
+
+如何解决3-34的问题？
+
+使用原始的定义，不要用multiplier定义。
+
+
+
+
+
+#### **Exercise 3.36.** 
+
+Suppose we evaluate the following sequence of expressions in the global environment:
+
+```lisp
+(define a (make-connector))
+(define b (make-connector))
+(set-value! a 10 'user)
+```
+
+At some time during evaluation of the `set-value!`, the following expression from the connector's local procedure is evaluated:
+
+```lisp
+(for-each-except setter inform-about-value constraints)
+```
+
+Draw an environment diagram showing the environment in which the above expression is evaluated.
+
+**使用set-value!会调用for-each-except，绘制其env图**
+
+
+
+#### **Exercise 3.37.** 
+
+The `celsius-fahrenheit-converter` procedure is cumbersome when compared with a more expression-oriented style of definition, such as
+
+```lisp
+(define (celsius-fahrenheit-converter x)
+  (c+ (c* (c/ (cv 9) (cv 5))
+          x)
+      (cv 32)))
+(define C (make-connector))
+(define F (celsius-fahrenheit-converter C))
+```
+
+Here `c+`, `c*`, etc. are the **"constraint" versions of the arithmetic operations.** 
+
+For example, `c+` takes two connectors as arguments and returns a connector that is related to these by an adder constraint:
+
+```lisp
+(define (c+ x y)
+  (let ((z (make-connector)))
+    (adder x y z)
+    z))
+```
+
+Define analogous procedures `c-`, `c*`, `c/`, and `cv` (constant value) that enable us to define compound constraints as in the converter example above.
+
+（1）实现c-、c*和c/
+
+（2）让上面的`celsius-fahrenheit-converter`是正确的
+
+
+
+
+
+面向表达式的格式很方便，因为它**避免了为计算中的中间表达式命名的需要**。
+
+```lisp
+(v-sum a b temp1)
+(v-sum c d temp2)
+(v-prod temp1 temp2 answer)
+```
+
+->
+
+```lisp
+(define answer (v-prod (v-sum a b) (v-sum c d)))
+```
+
