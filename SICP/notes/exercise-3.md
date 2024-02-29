@@ -1769,3 +1769,30 @@ $$
 
 
 
+#### **Exercise 3.39.** 
+
+Which of the five possibilities in the parallel execution shown above remain if we instead serialize execution as follows:
+
+```lisp
+(define x 10)
+(define s (make-serializer))
+(parallel-execute (lambda () (set! x ((s (lambda () (* x x))))))
+                  (s (lambda () (set! x (+ x 1)))))
+```
+
+只有一个进程添加了 serializer，结果如何？
+
+121、101
+
+```
+(lambda () (set! x ((s (lambda () (* x x))))))
+```
+
+set! x 可能会被打断
+
+```
+(set! x (+ 10 1)) => x = 11 => (set! x (* 11 11)) => x = 121
+(set! x (* 10 10)) => x = 100 => (set! x (+ 100 1)) => x = 101
+(set! x ?) => (set! x (+ 10 1)) => x = 11 => (set! x (* 11 11)) => x = 121
+```
+

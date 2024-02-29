@@ -17,6 +17,20 @@ https://blog.csdn.net/weixin_40827685/article/details/109751129
 - sudo apt-get install mit-scheme
 - **sudo apt install racket**
 
+JS 版本的SICP
+
+https://sourceacademy.org/sicpjs/index
+
+
+
+安装emacs
+
+```
+sudo apt install emacs
+```
+
+
+
 
 
 使用DrRacket ！
@@ -71,6 +85,8 @@ http://community.schemewiki.org/?sicp-solutions
 
 https://sicp-solutions.net/
 
+https://sicp.readthedocs.io/en/latest/
+
 
 
 files-viewer
@@ -94,3 +110,77 @@ Ctrl+T             新建标签
 Ctrl+W            关闭当前窗口（或标签）
 
 Ctrl+R或F5     运行
+
+
+
+MIT-scheme + vscode 的配置
+
+下载
+
+```bash
+sudo apt-get install mit-scheme
+```
+
+可执行文件
+
+```
+/usr/bin/mit-scheme
+/usr/bin/mit-scheme-x86-64
+```
+
+terminal 启动
+
+输入 `mit-scheme` 或 `scheme` 进入解释器
+
+编译+运行源码，假设源码文件名为 `add.scm`
+
+```
+(cf "add")
+(load "add")
+```
+
+
+
+vscode 上的插件：
+
+vscode-scheme 和 Code Runner
+
+https://stackoverflow.com/questions/62501529/how-to-run-scheme-program-in-vs-code
+
+
+
+添加一个task.json
+
+```json
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run scheme",
+            "type": "shell",
+            "command": "scheme",
+            "args": ["<", "${file}"]
+
+        }
+    ]
+}
+```
+
+
+
+vscode 配置
+
+```json
+ "code-runner.executorMap": {
+    "scheme": "/usr/bin/mit-scheme-x86-64 < "
+  }
+```
+
+
+
+
+
+
+
