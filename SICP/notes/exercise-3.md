@@ -1796,3 +1796,365 @@ set! x 可能会被打断
 (set! x ?) => (set! x (+ 10 1)) => x = 11 => (set! x (* 11 11)) => x = 121
 ```
 
+
+
+#### **Exercise 3.40.** 
+
+Give all possible values of `x` that can result from executing
+
+```lisp
+(define x 10)
+(parallel-execute (lambda () (set! x (* x x)))
+                  (lambda () (set! x (* x x x))))
+```
+
+Which of these possibilities remain if we instead use serialized procedures:
+
+```lisp
+(define x 10)
+(define s (make-serializer))
+(parallel-execute (s (lambda () (set! x (* x x))))
+                  (s (lambda () (set! x (* x x x)))))
+```
+
+（1）如果没有进行序列化，有哪些结果？
+
+100、1000、100 * 100 * 100、1000 * 1000、10 * 1000、10 * 10 * 100、10 * 100 * 100
+
+分析方法就是在计算某个 x * x 的中途 x 会被 另一个进程打断，即出现 1000的情况，同理 计算 某个 x * x * x的时候，也会出现 x 被另一个进程打断，出现 100 的情况。
+
+```
+100
+1000
+1000_0
+1000_00
+1000_000
+```
+
+（2）进行了序列化，有哪些结果？
+
+100 * 100 * 100 = 1000_000
+
+
+
+#### **Exercise 3.41.** 
+
+Ben Bitdiddle worries that it would be better to implement the bank account as follows (where the commented line has been changed):
+
+```lisp
+(define (make-account balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  ;; continued on next page
+
+  (let ((protected (make-serializer)))
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) (protected withdraw))
+            ((eq? m 'deposit) (protected deposit))
+            ((eq? m 'balance)
+             ((protected (lambda () balance)))) ; serialized
+            (else (error "Unknown request -- MAKE-ACCOUNT"
+                         m))))
+    dispatch))
+```
+
+**because allowing unserialized access to the bank balance can result in anomalous behavior.** Do you agree? Is there any scenario that demonstrates Ben's concern?
+
+允许 account balance 进行非序列化访问会导致异常行为，正确吗？
+
+
+
+不需要，实际上 (dispatch 'balance) 就是一个读操作，出现异常的原因是有写操作导致的数据不一致。
+
+对withdraw和 deposit进行序列化即可。
+
+
+
+#### **Exercise 3.42.** 
+
+Ben Bitdiddle suggests that it's a waste of time to create a new serialized procedure in response to every `withdraw` and `deposit` message. 
+
+He says that `make-account` could be changed so that the calls to `protected` are done outside the `dispatch` procedure. 
+
+That is, an account would return the same serialized procedure (which was created at the same time as the account) each time it is asked for a withdrawal procedure.
+
+```lisp
+(define (make-account balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (let ((protected (make-serializer)))
+    (let ((protected-withdraw (protected withdraw))
+          (protected-deposit (protected deposit)))
+      (define (dispatch m)
+        (cond ((eq? m 'withdraw) protected-withdraw)
+              ((eq? m 'deposit) protected-deposit)
+              ((eq? m 'balance) balance)
+              (else (error "Unknown request -- MAKE-ACCOUNT"
+                           m))))
+      dispatch)))
+```
+
+Is this a safe change to make? In particular, is there any difference in what concurrency is allowed by these two versions of `make-account` ?
+
+（1）上面的做法正确吗？
+
+（2）对比分析一下？
+
+看上去没有问题，无论是withdraw还是deposit都是共用一把锁，不会出现数据竞争。
+
+
+
+- 原先的版本是**在调用withdraw或deposit时**加锁。
+- 现在的版本是**在调用withdraw或deposit前**加锁。
+
+
+
+即一个是加在具体的调用上，一个是加在调用函数之前。
+
+  
+
+#### **Exercise 3.43.** 
+
+Suppose that the balances in three accounts start out as \$10, \$20, and \$30, and that multiple processes run, exchanging the balances in the accounts. 
+
+Argue that if the processes are run sequentially, after any number of concurrent exchanges, **the account balances should be \$10, \$20, and \$30 in some order.** 
+
+Draw a timing diagram like the one in figure 3.29 to **show how this condition can be violated if the exchanges are implemented using the first version of the account-exchange program in this section.** 
+
+On the other hand, argue that even with this `exchange` program, **the sum of the balances in the accounts will be preserved.** 
+
+Draw a timing diagram to show **how even this condition would be violated** if we did not serialize the transactions on individual accounts.
+
+
+
+（1）三个账户 \$10、\$20、\$30，任意进程执行 exchange，最后得到的账户仍然是\$10、\$20、\$30
+
+（2）如果使用没有序列化的account-exchange ，最后三个账户是否始终是\$10、\$20、\$30的排列？
+
+（3）如果使用没有序列化的account-exchange，三个账户的和是否依然是$60？
+
+
+
+下面是原始没有加锁的exchange：
+
+```lisp
+(define (exchange account1 account2)
+  (let ((difference (- (account1 'balance)
+                       (account2 'balance))))
+    ((account1 'withdraw) difference)
+    ((account2 'deposit) difference)))
+```
+
+下面是增加了锁的exchange：
+
+```lisp
+(define (make-account-and-serializer balance)
+    (define (withdraw amount)
+        (if (>= balance amount)
+            (begin (set! balance (- balance amount))
+                   balance)
+            "Insufficient funds"))
+    (define (deposit amount)
+        (set! balance (+ balance amount))
+        balance)
+    (let ((balance-serializer (make-serializer)))
+         (define (dispatch m)
+             (cond ((eq? m 'withdraw) withdraw)
+                 ((eq? m 'deposit) deposit)
+                 ((eq? m 'balance) balance)
+                 ((eq? m 'serializer) balance-serializer)
+                 (else (error "Unknown request -- MAKE-ACCOUNT"
+                              m))))
+         dispatch))
+(define (deposit account amount)
+    (let ((s (account 'serializer))
+          (d (account 'deposit)))
+         ((s d) amount)))
+(define (withdraw account amount)
+    (let ((s (account 'serializer))
+          (d (account 'withdraw)))
+         ((s d) amount)))
+(define (exchange account1 account2)
+    (let ((difference (- (account1 'balance)
+                         (account2 'balance))))
+         ((account1 'withdraw) difference)
+         ((account2 'deposit) difference)))
+(define (serialized-exchange account1 account2)
+    (let ((serializer1 (account1 'serializer))
+          (serializer2 (account2 'serializer)))
+         ((serializer1 (serializer2 exchange))
+          account1
+          account2)
+         )
+    )
+```
+
+serializer1、serializer2就是account1和account2的锁，
+
+**通过(serializer1 (serialproblem? (You should assume that the balance in from-account is at least amount.)
+
+（1）上面的transfer 是转账的过程描述。
+
+（2）先从from-account中withdraw amount 的金额，然后deposit to-account 中amount的金额。
+
+（3）transfer 和 exchange 的区别是什么？是否需要像处理exchange那样处理transfer？izer2 exchange)) 得到的就是获取了account1和account2两把锁后的exchange，**
+
+使用这个exchange就可以**原子性的交换account1和account2，不会发生交叉的情况**。
+
+
+
+
+
+#### **Exercise 3.44.** 
+
+Consider the problem of transferring an amount from one account to another. 
+
+Ben Bitdiddle claims that this can **be accomplished with the following procedure, even if there are multiple people concurrently transferring money among multiple accounts, using any account mechanism that serializes deposit and withdrawal transactions**, for example, the version of `make-account` in the text above.
+
+```lisp
+(define (transfer from-account to-account amount)
+  ((from-account 'withdraw) amount)
+  ((to-account 'deposit) amount))
+```
+
+Louis Reasoner claims that there is a problem here, and that we need to use a more sophisticated method, **such as the one required for dealing with the exchange problem.** 
+
+Is Louis right? If not, what is the essential difference between the transfer problem and the exchange problem? (You should assume that the balance in `from-account` is at least `amount`.)
+
+（1）上面的transfer 是转账的过程描述。
+
+（2）先从from-account中withdraw amount 的金额，然后deposit to-account 中amount的金额。
+
+（3）transfer 和 exchange 的区别是什么？是否需要像处理exchange那样处理transfer？
+
+
+
+对比一下exchange和transfer？
+
+ ```lisp
+ (define (exchange account1 account2)
+     (let ((difference (- (account1 'balance)
+                          (account2 'balance))))
+          ((account1 'withdraw) difference)
+          ((account2 'deposit) difference)))
+ (define (transfer from-account to-account amount)
+   ((from-account 'withdraw) amount)
+   ((to-account 'deposit) amount))
+ ```
+
+exchange 有一个 中间的读取 balance 并进行计算的过程，但是transfer 没有
+
+transfer的amount是指定的，withdraw和deposit操作的是不同的account，无论怎样，各自withdraw和deposit加锁了，对结果是没有影响的，所以transfer是不需要加锁的！！
+
+exchange，一个帐户的状态依赖于另一个帐户的状态(它们是耦合的)。
+
+In the exchange problem, state of one account depends on the state of another account (they are coupled).
+
+
+
+#### **Exercise 3.45.** 
+
+Louis Reasoner thinks our bank-account system is unnecessarily complex and error-prone **now that deposits and withdrawals aren't automatically serialized.** 
+
+He suggests that `make-account-and-serializer` should have exported the serializer (for use by such procedures as `serialized-exchange`) in addition to (rather than instead of) using it to serialize accounts and deposits as `make-account` did. 
+
+He proposes to redefine accounts as follows:
+
+```lisp
+(define (make-account-and-serializer balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (let ((balance-serializer (make-serializer)))
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) (balance-serializer withdraw))
+            ((eq? m 'deposit) (balance-serializer deposit))
+            ((eq? m 'balance) balance)
+            ((eq? m 'serializer) balance-serializer)
+            (else (error "Unknown request -- MAKE-ACCOUNT"
+                         m))))
+    dispatch))
+```
+
+**Then deposits are handled as with the original make-account:**
+
+```lisp
+(define (deposit account amount)
+ ((account 'deposit) amount))
+```
+
+Explain what is wrong with Louis's reasoning. 
+
+In particular, consider what happens when `serialized-exchange` is called.
+
+
+
+（1）make-account 提供 serializer 
+
+（2）deposit 
+
+本来是这样：
+
+```lisp
+(define (deposit account amount)
+    (let ((s (account 'serializer))
+          (d (account 'deposit)))
+         ((s d) amount)))
+```
+
+现在变这样：
+
+```lisp
+(define (deposit account amount)
+ ((account 'deposit) amount))
+```
+
+对吗？
+
+并不对，将 serializer 单独设置一个接口就是为了减少耦合，为了更加方便地编码！
+
+比如有些过程的执行就需要获取多个锁，然后才执行特定的过程，那么这样将 serializer 单独拿出来就是十分方便的做法。
+
+```lisp
+(define (exchange account1 account2)
+    (let ((difference (- (account1 'balance)
+                         (account2 'balance))))
+         ((account1 'withdraw) difference)
+         ((account2 'deposit) difference)))
+(define (serialized-exchange account1 account2)
+    (let ((serializer1 (account1 'serializer))
+          (serializer2 (account2 'serializer)))
+         ((serializer1 (serializer2 exchange))
+          account1
+          account2)
+         )
+    )
+```
+
+如果我们将deposit和withdraw的内部调用全部加上锁，反而会导致exchange实现出问题，原因是在
+
+serialized-exchange中已经加锁了，在exchange中的withdraw和deposit又获取锁，直接出现
+
+**“尝试获取两把相同的锁，即死锁了”**
+
+
+
+
+
