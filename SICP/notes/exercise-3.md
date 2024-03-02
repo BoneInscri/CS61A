@@ -2158,3 +2158,225 @@ serialized-exchange中已经加锁了，在exchange中的withdraw和deposit又�
 
 
 
+#### **Exercise 3.46.** 
+
+Suppose that we implement `test-and-set!` using an ordinary procedure as shown in the text, **without attempting to make the operation atomic.** 
+
+Draw a timing diagram like the one in figure 3.29 to demonstrate how the mutex implementation can fail by allowing two processes to acquire the mutex at the same time.
+
+
+
+如果 test-and-set! 不是原子的，那么如果两个进程同时acquire就会出现两个进程 同时都获取到了锁，实际上是不正确的！
+
+
+
+#### **Exercise 3.47.** 
+
+A semaphore (of size *n*) is a generalization of a mutex. 
+
+Like a mutex, a semaphore supports acquire and release operations, but it is more general in that up to *n* processes can acquire it concurrently. 
+
+Additional processes that attempt to acquire the semaphore must wait for release operations. Give implementations of semaphores.
+
+a. in terms of mutexes
+
+b. in terms of atomic `test-and-set!` operations.
+
+
+
+（1）给出信号量的定义
+
+（2）用信号量定义 mutex
+
+（3）用信号量定义 test-and-set!
+
+
+
+```lisp
+(define (test-and-set! cell)
+    (if (car cell)
+        true
+        (begin (set-car! cell true)
+               false)))
+(define (make-mutex)
+    (let ((cell (list false)))
+         (define (clear! cell)
+             (set-car! cell false))
+         (define (the-mutex m)
+             (cond 
+                 ((eq? m 'acquire)
+                  (if (test-and-set! cell)
+                  	  (the-mutex 'acquire))) ; retry
+                 ((eq? m 'release)
+                  	(clear! cell))))
+         the-mutex))
+```
+
+
+
+semaphore 的过程描述如下：
+
+```lisp
+ (define (make-semaphore n) 
+   (let ((lock (make-mutex)) 
+         (taken 0)) 
+     (define (semaphore command) 
+       (cond ((eq? command 'acquire) 
+              (lock 'acquire) 
+              (if (< taken n) 
+                  (begin (set! taken (1+ taken)) (lock 'release)) 
+                  (begin (lock 'release) (semaphore 'acquire)))) 
+             ((eq? command 'release) 
+              (lock 'acquire) 
+              (set! taken (1- taken)) 
+              (lock 'release)))) 
+     semaphore)) 
+```
+
+（1）lock 用来保护 taken
+
+（2）taken 从0开始，表示目前获取资源的进程个数
+
+（3）每次对 taken 操作，都需要用 (lock 'acquire)，别忘记 (lock 'release)
+
+（4）如果 传递给 semaphore 的message 是 'acquire，那么就需要 (set! taken (1+ taken))
+
+（5）如果 传递给 semaphore 的message 是 'release，那么就需要 (set! taken (1- taken))
+
+（6）'acquire，如果 taken >= n，那么需要先释放锁，然后重新调用semaphore 的acquire！
+
+```lisp
+(define (1+ x)
+    (+ x 1))
+(define (1- x)
+    (- x 1))
+```
+
+
+
+#### **Exercise 3.48.** 
+
+**Explain in detail why** the deadlock-avoidance method described above, (i.e., the accounts are numbered, and each process attempts to acquire the smaller-numbered account first) avoids deadlock in the exchange problem. 
+
+**Rewrite** `serialized-exchange` to incorporate this idea.
+
+(You will also need to modify `make-account` so that each account is created with a number, which can be accessed by sending an appropriate message.)
+
+（1）为什么对account进行编号，然后每个进程每次先尝试获取小的账户就可以避免 exchange 中的 deadlock？
+
+（2）重写 serialized-exchange，实现上面这个编号的过程。
+
+（3）修改 make-account，为每个  account 增加一个编号。
+
+
+
+下面是原先的代码：
+
+ ```lisp
+ (define (make-account-and-serializer balance)
+     (define (withdraw amount)
+         (if (>= balance amount)
+             (begin (set! balance (- balance amount))
+                    balance)
+             "Insufficient funds"))
+     (define (deposit amount)
+         (set! balance (+ balance amount))
+         balance)
+     (let ((balance-serializer (make-serializer)))
+          (define (dispatch m)
+              (cond ((eq? m 'withdraw) withdraw)
+                  ((eq? m 'deposit) deposit)
+                  ((eq? m 'balance) balance)
+                  ((eq? m 'serializer) balance-serializer)
+                  (else (error "Unknown request -- MAKE-ACCOUNT"
+                               m))))
+          dispatch))
+ (define (deposit account amount)
+     (let ((s (account 'serializer))
+           (d (account 'deposit)))
+          ((s d) amount)))
+ (define (withdraw account amount)
+     (let ((s (account 'serializer))
+           (d (account 'withdraw)))
+          ((s d) amount)))
+ (define (exchange account1 account2)
+     (let ((difference (- (account1 'balance)
+                          (account2 'balance))))
+          ((account1 'withdraw) difference)
+          ((account2 'deposit) difference)))
+ (define (serialized-exchange account1 account2)
+     (let ((serializer1 (account1 'serializer))
+           (serializer2 (account2 'serializer)))
+          ((serializer1 (serializer2 exchange))
+           account1
+           account2)
+          )
+     )
+ ```
+
+下面是使用编号后的代码：
+
+```lisp
+(define (make-account-and-serializer id balance)
+    (define (withdraw amount)
+        (if (>= balance amount)
+            (begin (set! balance (- balance amount))
+                   balance)
+            "Insufficient funds")
+        )
+    (define (deposit amount)
+        (set! balance (+ balance amount))
+        balance
+        )
+    (let ((balance-serializer (make-serializer)))
+         (define (dispatch m)
+             (cond ((eq? m 'withdraw) withdraw)
+                 ((eq? m 'deposit) deposit)
+                 ((eq? m 'balance) balance)
+                 ((eq? m 'serializer) balance-serializer)
+                 (else (error "Unknown request -- MAKE-ACCOUNT"
+                              m))))
+         dispatch)
+    )
+(define (serialized-exchange account1 account2) 
+    (let* ((serializer1 (account1 'serializer)) 
+           (serializer2 (account2 'serializer)) 
+           (exchanger (if (< (account1 'id) (account2 'id)) 
+                          (serializer1 (serializer2 exchange)) 
+                          (serializer2 (serializer1 exchange))
+                          )
+                      )
+           ) 
+          (exchanger account1 account2)
+          )
+    ) 
+```
+
+一个进程不可能获得资源a的锁并等待资源b的锁，而另一个进程拥有资源b的锁并等待资源a的锁。
+
+它让获取锁的顺序和account 的id相同，那么获取锁的顺序就不会交叉。
+
+
+
+
+
+#### **Exercise 3.49.** 
+
+Give a scenario where the deadlock-avoidance mechanism described above does not work. 
+
+(Hint: In the exchange problem, each process knows in advance which accounts it will need to get access to. **Consider a situation where a process must get access to some shared resources before it can know which additional shared resources it will require.**)
+
+（1）给出一个使用编号无法解避免的死锁问题？
+
+（2）**进程必须先访问一些共享资源，然后才能知道它需要哪些额外的共享资源。**
+
+
+
+
+
+如果无法在请求第一个锁之前知道它需要的所有锁，那么顺序就无法控制，也就无法强制其获取锁的顺序。。。
+
+
+
+控制获取锁的顺序是上面算法的关键！！！！
+
