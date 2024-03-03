@@ -2380,3 +2380,161 @@ Give a scenario where the deadlock-avoidance mechanism described above does not 
 
 控制获取锁的顺序是上面算法的关键！！！！
 
+
+
+
+
+#### **Exercise 3.50.** 
+
+Complete the following definition, which generalizes `stream-map` to allow procedures **that take multiple arguments**, analogous to `map` in section 2.2.3, footnote 12.
+
+```lisp
+(define (stream-map proc . argstreams)
+  (if (<??> (car argstreams))
+      the-empty-stream
+      (<??>
+       (apply proc (map <??> argstreams))
+       (apply stream-map
+              (cons proc (map <??> argstreams))))))
+```
+
+
+
+实现 传递多个参数的 stream-map：
+
+```lisp
+(map + (list 1 2 3) (list 40 50 60) (list 700 800 900))
+;(741 852 963)
+
+(map (lambda (x y) (+ x (* 2 y)))
+     (list 1 2 3)
+     (list 4 5 6))
+;(9 12 15)
+```
+
+
+
+回忆一下：
+
+```lisp
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+```
+
+
+
+最终得到的发现 cdr 是一个 promise？如果想完整的结果，只能遍历stream，然后输出。
+
+```lisp
+; map for stream (multiple arguments)
+(define (stream-map proc . argstreams)
+  (if (stream-null? (car argstreams))
+      the-empty-stream
+      (cons-stream
+       (apply proc (map stream-car argstreams))
+       (apply stream-map
+              (cons proc (map stream-cdr argstreams))))))
+(stream-map +
+            (cons-stream 1 2)
+            (cons-stream 40 44)
+            (cons-stream 700 704))
+```
+
+
+
+#### **Exercise 3.51.** 
+
+In order to take a closer look at delayed evaluation, we will use the following procedure, which simply returns its argument after printing it:
+
+```lisp
+(define (show x)
+  (display-line x)
+  x)
+```
+
+What does the interpreter print in response to evaluating each expression in the following sequence?
+
+```lisp
+(define x (stream-map show (stream-enumerate-interval 0 10)))
+(stream-ref x 5)
+(stream-ref x 7)
+```
+
+
+
+看一下程序执行后的结果？
+
+r5 和 r7 会正常显示，但是 stream-map 调用show也就只有8次，即从0～7，说明 stream 的确进行了延迟计算。
+
+但是如果 用 stream-for-each 就可以得到完整的 stream！
+
+```lisp
+(define y (stream-for-each (lambda (x)
+                             (display x)
+                             (newline))
+                           (stream-enumerate-interval 0 10)))
+```
+
+
+
+#### **Exercise 3.52.** 
+
+Consider the sequence of expressions
+
+```lisp
+(define sum 0)
+(define (accum x)
+  (set! sum (+ x sum))
+  sum)
+(define seq (stream-map accum (stream-enumerate-interval 1 20)))
+(define y (stream-filter even? seq))
+(define z (stream-filter (lambda (x) (= (remainder x 5) 0))
+                         seq))
+(stream-ref y 7)
+(display-stream z)
+```
+
+What is the value of `sum` after each of the above expressions is evaluated? 
+
+What is the printed response to evaluating the `stream-ref` and `display-stream` expressions? 
+
+Would these responses differ if we had implemented `(delay <*exp*>)` **simply** as `(lambda () <*exp*>)` without using the optimization provided by `memo-proc` ? 
+
+Explain.
+
+（1）执行完上述的代码后，sum 变为了什么？
+
+```lisp
+; sum
+210
+```
+
+（2）stream-ref和display-stream打印了什么？
+
+```lisp
+;stream-ref
+136
+; display-stream
+10
+15
+45
+55
+105
+120
+190
+210
+```
+
+（3）如果没有使用 memo-proc实现 delay，会有什么不同？
+
+
+
+每次delay计算时，没有记住，那么每次都需要重新计算。
+
+stream-ref 和 display-stream 都需要重新计算，sum 也不同。
+
+
+
