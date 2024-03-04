@@ -2538,3 +2538,282 @@ stream-ref 和 display-stream 都需要重新计算，sum 也不同。
 
 
 
+#### **Exercise 3.53.** 
+
+Without running the program, describe the elements of the stream defined by
+
+```lisp
+(define s (cons-stream 1 (add-streams s s)))
+```
+
+1 2 4 8 16 32 64  128 ...
+
+
+
+#### **Exercise 3.54.** 
+
+Define a procedure `mul-streams`, analogous to `add-streams`, that produces the elementwise product of its two input streams. 
+
+Use this together with the stream of `integers` to complete the following definition of the stream whose *n*th element (counting from 0) is *n* + 1 factorial:
+
+```lisp
+(define factorials (cons-stream 1 (mul-streams <??> <??>)))
+```
+
+（1）仿造 add-streams 实现 mul-streams
+
+（2）使用 mul-streams 和 integers 实现 factorials 的无限流
+
+（3）2！、3！、4！、... 
+
+
+
+#### **Exercise 3.55.** 
+
+Define a procedure `partial-sums` that takes as argument a stream *S* and returns the stream whose elements are *S*0, *S*0 + *S*1, *S*0 + *S*1 + *S*2, `...`. 
+
+For example, `(partial-sums integers)` should be the stream 1, 3, 6, 10, 15, `...`.
+
+（1）实现 partial-sums ，一个前缀和的无限流
+
+（2）使用 integers 进行测试
+
+```
+S:
+S0 S1 S2 S3
+
+partial-sum:
+S0 S0+S1 S0+S1+S2 S0+S1+S2+S3
+```
+
+```
+sum[i] = sum[i-1] + a[i]
+sum[i+1] = sum[i] + a[i+1]
+```
+
+一个最优雅的解法：
+
+向 S 的前面加一个0，
+
+```
+S':
+0 S0 S1 S2 
+
+partial-sum:
+S + S' 
+```
+
+
+
+```lisp
+(define (partial-sums s) 
+    (add-streams s (cons-stream 0 (partial-sums s)))) 
+```
+
+
+
+#### **Exercise 3.56.** 
+
+A famous problem, first raised by R. Hamming, is to enumerate, in ascending order **with no repetitions, all positive integers with no prime factors other than 2, 3, or 5**. 
+
+（1）枚举正整数，这些正整数只有2、3、5这三种素因数
+
+One obvious way to do this is to simply test each integer in turn to see **whether it has any factors other than 2, 3, and 5.** 
+
+（2）一种显而易见的方法是依次**测试每个整数，看看它是否有除2、3和5以外的因子。**
+
+But this is very inefficient, since, as the integers get larger, fewer and fewer of them fit the requirement. 
+
+As an alternative, let us call the required stream of numbers `S` and notice the following facts about it.
+
+- `S` begins with 1
+- The elements of `(scale-stream S 2)` are also elements of `S`
+- The same is true for `(scale-stream S 3)` and `(scale-stream 5 S)`
+- These are all the elements of `S`.
+
+Now all we have to do is combine elements from these sources. 
+
+For this we define a procedure `merge` that combines two ordered streams into one ordered result stream, eliminating repetitions:
+
+```lisp
+(define (merge s1 s2)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+         (let ((s1car (stream-car s1))
+               (s2car (stream-car s2)))
+           (cond ((< s1car s2car)
+                  (cons-stream s1car (merge (stream-cdr s1) s2)))
+                 ((> s1car s2car)
+                  (cons-stream s2car (merge s1 (stream-cdr s2))))
+                 (else
+                  (cons-stream s1car
+                               (merge (stream-cdr s1)
+                                      (stream-cdr s2)))))))))
+```
+
+Then the required stream may be constructed with `merge`, as follows:
+
+```lisp
+(define S (cons-stream 1 (merge <??> <??>)))
+```
+
+Fill in the missing expressions in the places marked <*??*> above.
+
+（3）实现 merge ，完成 S 的定义。
+
+
+
+#### **Exercise 3.57.** 
+
+How many additions are performed when we compute the *n*th Fibonacci number using the definition of `fibs` based on the `add-streams` procedure? 
+
+Show that the number of additions would **be exponentially greater** if we had implemented `(delay <*exp*>)` simply as `(lambda () <*exp*>)`, without using the optimization provided by the `memo-proc` procedure described in section 3.5.1.
+
+（1）使用 add-streams 构造的 n-th fibs 需要 多少次加法？
+
+（2）思考一下，如果 没有使用 memo-proc 实现 delay ，复杂度是 **指数的**？
+
+```lisp
+(define fibs
+  (cons-stream 0
+               (cons-stream 1
+                            (add-streams (stream-cdr fibs)
+                                         fibs))))
+```
+
+如果没有记忆化，那么每次都需要重新计算，即每次都需要计算 n-1 th fibs。
+
+如果记忆化了，每次都只需要计算1次，原因是在计算 n th fibs  时，前 n-1 个fibs 都计算出来了，并保存了。
+
+但是 第0个和第1个不需要计算，所以就是 需要 max(0, n-1)，n 从0开始。
+
+
+
+#### **Exercise 3.58.** 
+
+Give an interpretation of the stream computed by the following procedure:
+
+```lisp
+(define (expand num den radix)
+    (cons-stream
+     (quotient (* num radix) den)
+     (expand (remainder (* num radix) den) den radix)))
+```
+
+**(`Quotient` is a primitive that returns the integer quotient of two integers.)** 
+
+What are the successive elements produced by `(expand 1 7 10)` ? 
+
+What is produced by `(expand 3 8 10)` ?
+
+- （1）分析一下上面的程序，什么意思？
+- （2） (expand 1 7 10) 返回什么？
+
+```
+1 4 2 8 5 7 1
+```
+
+- （3） (expand 3 8 10) 返回什么？
+
+```
+3 7 5 0 0 0 0
+```
+
+是(/ num den)以radix为基数的浮点表示形式
+
+```
+3/8 = 3 * 10 ^ {-1} + 7 * 10 ^ {-2} + 5 * 10 ^ {-3}
+= 0.375
+```
+
+基本做法就是乘以 radix ，除以 den 得到当前位，然后递归计算 remainder ，即剩余的部分。
+
+
+
+
+
+#### **Exercise 3.59.** 
+
+In section 2.5.3 we saw how to implement a polynomial arithmetic system representing polynomials as lists of terms. In a similar way, we can work with *power series*, such as
+$$
+\begin{aligned}
+&e^{x}=1+x+{\frac{x^{2}}{2}}+{\frac{x^{3}}{3\cdot2}}+{\frac{x^{4}}{4\cdot3\cdot2}}+\cdots, \\
+
+&\cos\mathbf{x}=1-{\frac{\mathbf{x}^{2}}{2}}+{\frac{\mathbf{x}^{4}}{4\cdot3\cdot2}}-\cdots, \\
+
+&\sin\mathbf{x}=\mathbf{x}-{\frac{\mathbf{x}^{3}}{3\cdot2}}+{\frac{\mathbf{x}^{3}}{5\cdot4\cdot3\cdot2}}-\cdots,
+\end{aligned}
+$$
+represented as infinite streams. 
+
+（1）之前我们已经能够完整表示多项式的算术系统，接下来可以 用 无限stream 实现 幂级数！
+
+We will represent the series $a_0+a_1x+a_2x^2+a_3x^3+ ...$
+
+as the stream whose elements are **the coefficients *a*0, *a*1, *a*2, *a*3, `...`.**
+
+（2）表示系数即可。
+
+a. The **integral** of the series  $a_0+a_1x+a_2x^2+a_3x^3+ ...$ is the series
+$$
+c+a_{0}x+\frac{1}{2}a_{1}x^{2}+\frac{1}{3}a_{3}x^{3}+\frac{1}{4}a_{3}x^{4}+\cdots 
+$$
+where ***c* is any constant.** 
+
+（3）可以用无限stream实现的多项式表示多项式的积分。
+
+Define a procedure `integrate-series` that takes as input a stream
+
+$a_0,a_1,a_2,\ldots $ **representing a power series and returns the stream**
+
+$a_0，(1/2)a_1$，$(1/3)a_2,...$ of coefficients of the non-constant terms of the integral of the series. 
+
+(Since the result has no constant term, it doesn't represent a power series; when we use `integrate-series`, we will `cons` on the appropriate constant.)
+
+（4）实现 integrate-series，可以使用 cons 将常数添上！
+
+b. The function $x\mapsto e^x$ is **its own derivative.** 
+
+This implies that $e^x$ and the integral of $e^\mathrm{x}$ are the same series, **except for the constant term, which is $e^0=1.$** 
+
+Accordingly, we can generate the series for $e^{x}$ as
+
+```lisp
+(define exp-series
+  (cons-stream 1 (integrate-series exp-series)))
+```
+
+Show **how to generate the series for sine and cosine**, starting from the facts that the derivative of sine is cosine and the derivative of cosine is the negative of sine:
+
+```lisp
+(define cosine-series
+  (cons-stream 1 <??>))
+(define sine-series
+  (cons-stream 0 <??>))
+```
+
+（5）根据 $e^x$ ，表示 sin 和 cos 的序列
+
+sin 的导数是 cos
+$$
+sin'x=cosx
+\\
+sinx = sin(0) + \int cosx
+$$
+cos 的导数是 -sin
+$$
+cos'x=-sinx
+\\
+cosx=cos(0)+\int (-sinx)
+$$
+
+
+
+
+
+
+
+
+
+
