@@ -2812,8 +2812,126 @@ $$
 
 
 
+#### **Exercise 3.60.** 
+
+With power series represented as streams of coefficients as in exercise 3.59, adding series is implemented by `add-streams`. 
+
+Complete the definition of the following procedure for multiplying series:
+
+```lisp
+(define (mul-series s1 s2)
+  (cons-stream <??> (add-streams <??> <??>)))
+```
+
+You can test your procedure by verifying that $sin^2 x + cos^2 x = 1$, using the series from exercise 3.59.
+
+（1）使用 add-streams 完成 mul-series 的定义
+
+（2）验证 $sin^2x+cos^2x=1$
+
+
+
+**这个题目值得思考，很神奇的写法。**
+
+```lisp
+; multiple two series
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1)
+                  (stream-car s2))
+               (add-streams (scale-stream (stream-cdr s2) (stream-car s1))
+                            (mul-series (stream-cdr s1) s2))
+               )
+  )
+```
+
+
+
+回忆一下之前写的多项式乘法，主要是mul-terms，十分类似。
+
+mul-term-by-all-terms 就是 用一个项乘以另一个多项式的所有项。
+
+```lisp
+  ; mul
+  (define (mul-term-by-all-terms t1 L)
+    (if (empty-termlist? L)
+        (the-empty-termlist L)
+        (let ((t2 (first-term L)))
+          (adjoin-term
+           (make-term (+ (order t1) (order t2))
+                      (mul (coeff t1) (coeff t2)))
+           (mul-term-by-all-terms t1 (rest-terms L))))))
+  (define (mul-terms L1 L2)
+    (if (empty-termlist? L1)
+        (the-empty-termlist L1)
+        (add-terms (mul-term-by-all-terms (first-term L1) L2)
+                   (mul-terms (rest-terms L1) L2))))
+  (define (mul-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (mul-terms (term-list p1)
+                              (term-list p2)))
+        (error "Polys not in same var -- MUL-POLY"
+               (list p1 p2))))
+```
+
+```
+1+x+x^2+x^3
+*
+1+x+x^2+x^3
+```
+
+无限流的多项式乘法保证了 只需要 (stream-car s1) * (stream-car s2) 就可以得到最底阶的系数，所以每次将
+
+s1 向后移动一位，即可完成递归。
+
+![image-20240305114751811](exercise-3.assets/image-20240305114751811.png)
+
+相当于将 之前写过的mul-term-by-all-terms 拆开了。。。
+
+
+
+#### **Exercise 3.61.** 
+
+Let *S* be a power series (exercise 3.59) whose constant term is 1. 
+
+Suppose we want to find the power series 1/*S*, that is, **the series *X* such that $S \cdot X = 1$.** 
+
+Write $S = 1 + S_R$ where $S_R$ is the part of *S* after the constant term. 
+
+Then we can solve for *X* as follows:
+$$
+\begin{aligned}
+S\cdot X& \begin{matrix}{=1}\\\end{matrix}  \\
+(1+S_{R})\cdot X& \begin{array}{cc}=&1\\\end{array}  \\
+X+S_R\cdot X& \begin{array}{cc}=&1\\\end{array}  \\
+X& =1-S_{R}\cdot X 
+\end{aligned}
+$$
+In other words, $X$ is the power series whose constant term is 1 and whose higher-order terms are given by the negative of $S_R$ times $X$
+
+**Use this idea to write a procedure `invert-unit-series` that computes 1/*S* for a power series *S* with constant term 1.** 
+
+**You will need to use `mul-series` from exercise 3.60.**
+
+（1）实现 invert-unit-series
+
+（2）利用之前实现过的mul-series
 
 
 
 
 
+#### **Exercise 3.62.** 
+
+Use the results of exercises 3.60 and 3.61 to define a procedure `div-series` that divides two power series. `Div-series` should work for any two series, provided that the denominator series begins with a nonzero constant term. 
+
+**(If the denominator has a zero constant term, then `div-series` should signal an error.)** Show how to use `div-series` together with the result of exercise 3.59 to generate the power series for tangent.
+
+（1）实现 div-series，分母如果常数为0，则错误，如果常数非0，则可以计算
+
+（2）实现 tanx 的幂级数
+
+
+$$
+tanx=\frac{sinx}{cosx}
+$$
