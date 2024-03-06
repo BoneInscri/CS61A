@@ -2935,3 +2935,105 @@ Use the results of exercises 3.60 and 3.61 to define a procedure `div-series` th
 $$
 tanx=\frac{sinx}{cosx}
 $$
+
+
+
+#### **Exercise 3.63.** 
+
+Louis Reasoner asks why the `sqrt-stream` procedure was not written in the following more straightforward way, without the local variable `guesses`:
+
+```lisp
+(define (sqrt-stream x)
+  (cons-stream 1.0
+               (stream-map (lambda (guess)
+                             (sqrt-improve guess x))
+                           (sqrt-stream x))))
+```
+
+Alyssa P. Hacker replies that this version of the procedure **is considerably less efficient because it performs redundant computation.** 
+
+Explain Alyssa's answer. 
+
+**Would the two versions still differ in efficiency** if our implementation of `delay` used only `(lambda () <*exp*>)` without using the optimization provided by `memo-proc` (section 3.5.1)?
+
+（1）为什么 sqrt-stream 不使用 局部变量？sqrt-stream 出现了冗余计算？
+
+```lisp
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream 1.0
+                 (stream-map (lambda (guess)
+                               (sqrt-improve guess x))
+                             guesses)))
+  guesses)
+```
+
+（2）如果 delay 没有使用 memo-proc 的记忆化进行优化，这两个的效率是否一样？
+
+
+
+如果没有记忆化，相同的效率
+
+![image-20240306175243966](exercise-3.assets/image-20240306175243966.png)
+
+总结一下，就是原本的过程不创建新的流，每次只会创建并使用一个guesses
+
+而这个：
+
+```lisp
+(define (sqrt-stream x)
+  (cons-stream 1.0
+               (stream-map (lambda (guess)
+                             (sqrt-improve guess x))
+                           (sqrt-stream x))))
+```
+
+每次都会创建一个新的流
+
+
+
+
+
+#### **Exercise 3.64.** 
+
+Write a procedure `stream-limit` that takes **as arguments a stream and a number (the tolerance).** 
+
+It should examine the stream **until it finds two successive elements that differ in absolute value by less than the tolerance, and return the second of the two elements.** 
+
+Using this, we could compute square roots up to a given tolerance by
+
+```lisp
+(define (sqrt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+```
+
+（1）实现 stream-limit ，参数是一个 stream 和 一个 tolerance
+
+（2）使用 stream-limit 完成 sqrt
+
+（3）检查stream，直到找到两个连续的元素，它们的绝对值相差小于容差，然后返回两个元素中的第二个元素
+
+
+
+#### **Exercise 3.65.** 
+
+Use the series
+$$
+\ln2=1-\frac{1}{2}+\frac{1}{3}-\frac{1}{4}+\cdots
+$$
+to compute three sequences of approximations to the natural logarithm of 2, in the same way we did above for $\pi$
+
+How rapidly do these sequences converge?
+
+（1）使用类似计算 $\pi$ 的方式计算 $ln 2$
+
+（2）使用加速的收敛！！
+
+
+
+对比一下pi的计算公式：
+$$
+\frac{\pi}{4}=1-\frac{1}{3}+\frac{1}{5}-\frac{1}{7}+\cdots
+$$
+加速效果十分明显！！！
+
