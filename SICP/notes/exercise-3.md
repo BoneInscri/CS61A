@@ -3037,3 +3037,151 @@ $$
 $$
 加速效果十分明显！！！
 
+
+
+#### **Exercise 3.66.** 
+
+Examine the stream `(pairs integers integers)`. 
+
+Can you make any general comments about the order in which the pairs are placed into the stream? 
+
+For example, about how many pairs precede the pair (1,100)? the pair (99,100)? the pair (100,100)? 
+
+**(If you can make precise mathematical statements here, all the better.** 
+
+**But feel free to give more qualitative answers if you find yourself getting bogged down.)**
+
+（1）分析 (pairs integers integers)
+
+（2）(1, 100) 之前有多少 pair？(99, 100) 呢？(100, 100) 呢？
+
+（3）给出一个精确的结果？
+
+![image-20240307200336396](exercise-3.assets/image-20240307200336396.png)
+
+最好的办法就是将每个 pair 对应的有多少个pair在它之前填在二维平面上，然后找规律。
+$$
+f(n,m) \\
+m>=n (m,n \,is\, Z+)\\
+(m-n=0): 2^n - 1\\
+(m-n=1): (2^n - 1) + 2^{n - 1}\\
+(m-n>1): (2^n - 1) + 2^{n - 1} + (m - n - 1) * 2^n
+$$
+
+
+#### **Exercise 3.67.** 
+
+Modify the `pairs` procedure so that `(pairs integers integers)` will produce the stream of *all* pairs of integers (*i*,*j*) (without the condition $i\leq j$). 
+
+Hint: You will need to mix in an additional stream.
+
+定义  没有 $i \leq j$ 限制的 stream
+
+
+
+#### **Exercise 3.68.** 
+
+Louis Reasoner thinks that building a stream of pairs from three parts is unnecessarily complicated. 
+
+Instead of separating the pair (*S*0,*T*0) from the rest of the pairs in the first row, **he proposes to work with the whole first row, as follows:**
+
+```lisp
+(define (pairs s t)
+  (interleave
+   (stream-map (lambda (x) (list (stream-car s) x))
+               t)
+   (pairs (stream-cdr s) (stream-cdr t))))
+```
+
+Does this work? 
+
+**Consider what happens if we evaluate `(pairs integers integers)` using Louis's definition of `pairs`.**
+
+（1）为什么需要将 这个 stream分成三个部分，而不是两个部分？
+
+（2）如果这样写，会怎样？
+
+
+
+#### **Exercise 3.69.** 
+
+Write a procedure `triples` that takes three infinite streams, *S*, *T*, and *U*, and produces the stream of triples $(S_i,T_j,U_k)$ such that $i\leq j\leq k$.  
+
+Use `triples` to generate the stream of all Pythagorean triples of positive integers, i.e., the triples (i, j, k) such that $i \leq j$ and $i^2 + j^2 = k^2$.
+
+（1）编写可以得到 $(S_i,T_j,U_k)$ ，且  $i\leq j\leq k$的无限流
+
+（2）得到满足 $i \leq j$ 且 $i^2+j^2=k^2$ 的triples，$(i,j,k)$
+
+
+
+#### **Exercise 3.70.** 
+
+It would be nice to be able to generate streams in which the pairs appear in some useful order, **rather than in the order that results from an *ad hoc* interleaving process.** 
+
+We can use a technique similar to the `merge` procedure of exercise 3.56, if we define a way to say that one pair of integers is "less than"  another. 
+
+One way to do this is to define a "weighting function'' 
+
+$W(i,j)$ and **stipulate** that $(i_1,j_1)$ is less than $(i_2,j_2)$ if $W(i_1,j_1) < W(i_2,j_2)$. 
+
+Write a procedure `merge-weighted` that is like `merge`, except that `merge-weighted` **takes an additional argument `weight`**, which is a procedure that computes the weight of a pair, and is used to **determine the order in which elements should appear in the resulting merged stream.**
+
+Using this, generalize `pairs` to a procedure `weighted-pairs` that takes two streams, together with a procedure that computes a weighting function, and **generates the stream of pairs, ordered according to weight. Use your procedure to generate**
+
+a. the stream of all pairs of positive integers (*i*,*j*) with  $i \leq j$  ordered according to the sum $ i + j$
+
+b. the stream of all pairs of positive integers (*i*,*j*) with  $i \leq j$  where neither *i* nor *j* is divisible by 2, 3, or 5, and the pairs are ordered according to the sum 2 *i* + 3 *j* + 5 *i* *j*.
+
+（1）不要按照一个interleaving 的过程进行，而是按照一个特定的规则
+
+（2）根据权重来排序：
+
+$W(i,j)$ and **stipulate** that $(i_1,j_1)$ is less than $(i_2,j_2)$ if $W(i_1,j_1) < W(i_2,j_2)$. 
+
+权重函数需要满足，当沿着某一行增加时，权重变大，沿着某一列增加时，权重变大。
+
+（3）实现 merge-weighted ，传入一个weight过程
+
+（4）获得 sum i + j ，满足  $i \leq j$  条件的pair
+
+（5）pairs 需要排序，根据  2i + 3j + 5 ij，且  $i\leq j$ ，i 和 j 都不能被 2、3或者5整除
+
+
+
+
+
+#### **Exercise 3.71.** 
+
+Numbers that can be expressed as the sum of two cubes in more than one way are sometimes called ***Ramanujan numbers***, in honor of the **mathematician Srinivasa Ramanujan.**
+
+Ordered streams of pairs provide an elegant solution to the problem of computing these numbers. 
+
+To find a number that can be written as the sum of two cubes in two different ways, we need only generate the stream of pairs of integers (*i*,*j*) **weighted according to the sum $i^3+j^3$ (see exercise 3.70),** then search the stream for two consecutive pairs **with the same weight.** 
+
+Write a procedure to generate the Ramanujan numbers. 
+
+The first such number is 1,729. 
+
+What are the next five?
+
+（1）可以有多种方式表示为两个立方和的数：拉马努金数
+
+（2）根据之前写过的习题，生成 Ramanujan numbers
+
+every positive integer was one of his friends
+
+
+
+加权对生成**拉马努金数**
+
+
+
+
+
+#### **Exercise 3.72.** 
+
+In a similar way to exercise 3.71 generate a stream of all numbers that can be written as the sum of two squares in three different ways (showing how they can be so written).
+
+（1）仿造 3.71 实现 一个可以生成 **用三种方式 **  写成两个平方和的所有数字的stream
+
