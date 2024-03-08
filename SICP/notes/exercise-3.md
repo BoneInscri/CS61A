@@ -3069,6 +3069,7 @@ m>=n (m,n \,is\, Z+)\\
 $$
 
 
+
 #### **Exercise 3.67.** 
 
 Modify the `pairs` procedure so that `(pairs integers integers)` will produce the stream of *all* pairs of integers (*i*,*j*) (without the condition $i\leq j$). 
@@ -3076,6 +3077,10 @@ Modify the `pairs` procedure so that `(pairs integers integers)` will produce th
 Hint: You will need to mix in an additional stream.
 
 定义  没有 $i \leq j$ 限制的 stream
+
+
+
+<img src="exercise-3.assets/image-20240308120053288.png" alt="image-20240308120053288" style="zoom:50%;" />
 
 
 
@@ -3103,6 +3108,18 @@ Does this work?
 
 
 
+这个肯定无法运行，直接无限循环。
+
+```
+(pairs (stream-cdr s) (stream-cdr t)))
+```
+
+中没有进行延迟，直接就无限递归调用pairs了。
+
+
+
+
+
 #### **Exercise 3.69.** 
 
 Write a procedure `triples` that takes three infinite streams, *S*, *T*, and *U*, and produces the stream of triples $(S_i,T_j,U_k)$ such that $i\leq j\leq k$.  
@@ -3112,6 +3129,40 @@ Use `triples` to generate the stream of all Pythagorean triples of positive inte
 （1）编写可以得到 $(S_i,T_j,U_k)$ ，且  $i\leq j\leq k$的无限流
 
 （2）得到满足 $i \leq j$ 且 $i^2+j^2=k^2$ 的triples，$(i,j,k)$
+
+
+
+回忆一下之前写过的：
+
+```lisp
+(define (unique-triples n)
+  (accumulate append
+              nil
+              (accumulate append
+                          nil
+                          (map (lambda (i)
+                                 (map (lambda (j)
+                                        (map (lambda (k) (list i j k))
+                                             (enumerate-interval 1 (- j 1))
+                                             )
+                                        )
+                                      (enumerate-interval 1 (- i 1))
+                                      )
+                                 )
+                               (enumerate-interval 1 n)
+                               )
+                          )
+              )
+  )
+```
+
+triples，可以用 pairs 进行辅助实现！
+
+就不需要用多层 的map进行实现了。
+
+
+
+
 
 
 
@@ -3141,7 +3192,7 @@ $W(i,j)$ and **stipulate** that $(i_1,j_1)$ is less than $(i_2,j_2)$ if $W(i_1,j
 
 权重函数需要满足，当沿着某一行增加时，权重变大，沿着某一列增加时，权重变大。
 
-（3）实现 merge-weighted ，传入一个weight过程
+（3）实现 merge-weighted ，传入一个weight过程，使用 merge-weighted 实现 merge-weighted
 
 （4）获得 sum i + j ，满足  $i \leq j$  条件的pair
 
@@ -3174,6 +3225,19 @@ every positive integer was one of his friends
 
 
 加权对生成**拉马努金数**
+
+```
+1729
+4104
+13832
+20683
+32832
+39312
+40033
+46683
+64232
+65728
+```
 
 
 
