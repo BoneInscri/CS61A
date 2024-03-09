@@ -4,25 +4,6 @@
 (define (stream-car stream) (car stream))
 (define (stream-cdr stream) (force (cdr stream)))
 
-; map for stream (multiple arguments)
-(define (stream-map proc . argstreams)
-  (if (stream-null? (car argstreams))
-      the-empty-stream
-      (cons-stream
-       (apply proc (map stream-car argstreams))
-       (apply stream-map
-              (cons proc (map stream-cdr argstreams))))))
-
-; add two streams
-(define (add-streams s1 s2)
-  (stream-map + s1 s2))
-
-; ones stream
-(define ones (cons-stream 1 ones))
-
-; infinite stream starting from 1
-(define integers (cons-stream 1 (add-streams ones integers)))
-
 (define (sign-change-detector new old)
   (cond ((and (< old 0) (> new 0)) 1)
         ((and (> old 0) (< new 0)) -1)
@@ -45,12 +26,33 @@
     x)
   (stream-for-each-cnt show s cnt)
   )
+;(define (make-zero-crossings input-stream last-value)
+;  (cons-stream
+;   (sign-change-detector (stream-car input-stream) last-value)
+;   (make-zero-crossings (stream-cdr input-stream)
+;                        (stream-car input-stream))))
+
+(define (smooth input-stream)
+  (define (average x y) (/ (+ x y) 2))
+  (define (do-smooth s last-value)
+    (let ((avpt (average (stream-car s) last-value)))
+      (cons-stream avpt
+                   (do-smooth (stream-cdr s) (stream-car s))
+                   )
+      )
+    )
+  (do-smooth input-stream 0)
+  )
 
 (define (make-zero-crossings input-stream last-value)
-  (cons-stream
-   (sign-change-detector (stream-car input-stream) last-value)
-   (make-zero-crossings (stream-cdr input-stream)
-                        (stream-car input-stream))))
+  (define (do-make-zero-crossings input-smooth-stream last-value)
+    (cons-stream
+     (sign-change-detector (stream-car input-smooth-stream) last-value)
+     (do-make-zero-crossings (stream-cdr input-smooth-stream)
+                             (stream-car input-smooth-stream)))
+    )
+  ; first smooth stream!
+  (do-make-zero-crossings (smooth input-stream) last-value))
 
 ; test
 (define random-init 1) 
@@ -71,14 +73,11 @@
   (cons-stream (random-in-range low high) 
                (random-stream low high)))
 
-(define sense-data (random-stream -10 10))
+(define sense-data (random-stream -30 30))
 (display-stream-cnt sense-data 10)
-;(define zero-crossings (make-zero-crossings sense-data 0))
-;(display-stream-cnt zero-crossings 10)
 
-(define zero-crossings
-  (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
+(define smooth-data (smooth sense-data))
+(display-stream-cnt smooth-data 10)
 
+(define zero-crossings (make-zero-crossings sense-data 0))
 (display-stream-cnt zero-crossings 10)
-
-
