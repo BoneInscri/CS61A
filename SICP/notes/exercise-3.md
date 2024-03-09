@@ -3249,3 +3249,183 @@ In a similar way to exercise 3.71 generate a stream of all numbers that can be w
 
 （1）仿造 3.71 实现 一个可以生成 **用三种方式 **  写成两个平方和的所有数字的stream
 
+
+
+
+
+#### **Exercise 3.73**
+
+RC 电路的信号流图
+
+<img src="3-5.assets/image-20240309105858665.png" alt="image-20240309105858665" style="zoom:80%;" />
+
+<img src="3-5.assets/image-20240309105922070.png" alt="image-20240309105922070" style="zoom:80%;" />
+
+一个电阻+一个电容进行串联
+
+输入电流，得到电压
+
+We can model electrical circuits using streams to represent the values of currents or voltages at a sequence of times. 
+
+For instance, suppose we have an *RC circuit* consisting of a resistor of resistance *R* and a capacitor of capacitance *C* in series. 
+
+The voltage response *v* of the circuit to an injected current *i* is determined by the formula in figure 3.33, whose structure is shown by the accomp(nying signal-flow diagram.
+
+**Write a procedure `RC` that models this circuit.** 
+
+`RC` should take as inputs the values of *R*, *C*, and *dt* and should **return a procedure** that takes as inputs a stream representing the current *i* and an initial value for the capacitor voltage *v*0 and produces as output the stream of voltages *v*. 
+
+For example, you should be able to use `RC` to model an RC circuit with *R* = 5 ohms, *C* = 1 farad, and a 0.5-second time step by evaluating `(define RC1 (RC 5 1 0.5))`. 
+
+**This defines `RC1` as a procedure that takes a stream representing the time sequence of currents and an initial capacitor voltage and produces the output stream of voltages.**
+
+（1）理解 RC 电路
+
+（2）实现过程 RC，参数为 R、C、dt，返回一个过程，这个过程接受一个 stream，然后得到 电压 stream
+
+
+
+回忆一下 integrator ：
+
+![image-20240309113339394](exercise-3.assets/image-20240309113339394.png)
+
+<img src="exercise-3.assets/image-20240309113344756.png" alt="image-20240309113344756" style="zoom:50%;" />
+
+```lisp
+; integral for stream
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int)))
+  int)
+```
+
+这里的 integral 有一个向回的箭头！！
+
+
+
+
+
+
+
+#### **Exercise 3.74.** 
+
+Alyssa P. Hacker is designing a system to process signals coming from physical sensors. 
+
+One important feature she wishes to produce is a signal that describes the *zero crossings* of the input signal. 
+
+That is, the resulting signal should be + 1 whenever the input signal changes from negative to positive, - 1 whenever the input signal changes from positive to negative, and 0 otherwise. 
+
+(Assume that the sign of a 0 input is positive.) 
+
+**For example, a typical input signal with its associated zero-crossing signal would be**
+
+```
+... 1  2  1.5 1  0.5  -0.1  -2  -3  -2 -0.5 0.2 3 4 ...
+... 0  0  0   0  0    -1    0   0   0  0    1   0 0 ...
+```
+
+In Alyssa's system, the signal from the sensor is represented as a stream `sense-data` and the stream `zero-crossings` is the corresponding stream of zero crossings. 
+
+Alyssa first writes a procedure `sign-change-detector` that takes two values as arguments and compares the signs of the values to produce an appropriate 0, 1, or - 1. 
+
+**She then constructs her zero-crossing stream as follows:**
+
+```lisp
+(define (make-zero-crossings input-stream last-value)
+  (cons-stream
+   (sign-change-detector (stream-car input-stream) last-value)
+   (make-zero-crossings (stream-cdr input-stream)
+                        (stream-car input-stream))))
+
+(define zero-crossings (make-zero-crossings sense-data 0))
+```
+
+Alyssa's boss, Eva Lu Ator, walks by and suggests that this program is approximately equivalent to the following one, **which uses the generalized version of `stream-map` from exercise 3.50:**
+
+```lisp
+(define zero-crossings
+  (stream-map sign-change-detector sense-data <expression>))
+```
+
+Complete the program by supplying the indicated <*expression*>.
+
+（1）zero crossings，
+
+- 如果信号由负变正，那么结果是 +1
+
+- 如果信号由正变负，结果是 -1
+
+- 如果信号符号没有变，那么就是 0
+
+
+（2）完成使用 多参数的stream-map 完成 zero-crossings
+
+就是 用 cons-stream 和 0进行拼接，即向右移一位，然后进行stream-map 即可
+
+```lisp
+(define zero-crossings
+  (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
+```
+
+
+
+
+
+#### **Exercise 3.75.** 
+
+Unfortunately, Alyssa's zero-crossing detector in exercise 3.74 proves to be insufficient, **because the noisy signal from the sensor leads to spurious zero crossings.** 
+
+Lem E. Tweakit, a hardware specialist, suggests that Alyssa smooth the signal to **filter out the noise before extracting the zero crossings.** 
+
+Alyssa takes his advice and decides to extract the zero crossings from the signal constructed **by averaging each value of the sense data with the previous value.** 
+
+She explains the problem to her assistant, Louis Reasoner, who attempts to implement the idea, altering Alyssa's program as follows:
+
+```lisp
+(define (make-zero-crossings input-stream last-value)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-value)
+                 (make-zero-crossings (stream-cdr input-stream)
+                                      avpt))))
+```
+
+This does not correctly implement Alyssa's plan. 
+
+Find the bug that Louis has installed and fix it without changing the structure of the program. 
+
+(Hint: You will need to increase the number of arguments to `make-zero-crossings`.)
+
+（1）噪音对结果有影响
+
+（2）在 zero crossings 之前进行过滤噪音
+
+（3）对 make-zero-crossings 进行修改，让其正确
+
+
+
+#### **Exercise 3.76.** 
+
+Eva Lu Ator has a criticism of Louis's approach in exercise 3.75. 
+
+The program he wrote is not modular, because it intermixes the operation of smoothing with the zero-crossing extraction. 
+
+For example, the extractor should not have to be changed if Alyssa finds a better way to condition her input signal. 
+
+**Help Louis by writing a procedure `smooth` that takes a stream as input and produces a stream in which each element is the average of two successive input stream elements.** 
+
+Then use `smooth` as a component to implement the zero-crossing detector in a more modular style.
+
+（1）将 smooth 操作 和 zero-crossing 进行拆分，即解耦合
+
+（2）smooth 将一个流作为输入，并生成一个流，其中每个元素是两个连续输入流元素的平均值
+
+（3）用“smooth”作为组件，以更模块化的方式实现过零检测器
+
+
+
+
+
+
+
