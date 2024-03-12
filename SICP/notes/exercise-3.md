@@ -3652,3 +3652,43 @@ Using RLC, generate the **pair of streams** that models the behavior of **a seri
   )
 ```
 
+
+
+
+
+#### **Exercise 3.81.** 
+
+Exercise 3.6 discussed generalizing the random-number generator to allow one to **reset** the random-number sequence so as to **produce** repeatable sequences of "random'' numbers. 
+
+**Produce a stream formulation of this same generator** that operates on an input stream of requests to `generate` a new random number or to `reset` the sequence to a specified value and that produces the desired stream of random numbers. 
+
+**Don't use assignment in your solution.**
+
+（1）不能使用赋值语句
+
+（2）支持对 random-numbers  的序列两种操作： generate 和 reset
+
+
+
+传入的参数记得是一个 request stream ，不然不好处理。
+
+关键就是将 reset 和 generate 的stream 构造放在一个函数中！
+
+
+
+#### **Exercise 3.82.** 
+
+Redo exercise 3.5 on Monte Carlo integration in terms of streams. 
+
+The stream version of `estimate-integral` **will not have an argument telling how many trials to perform.** 
+
+Instead, it will produce a **stream of estimates based on successively more trials.**
+
+（1）estimate-integral 没有一个进行多少次试验的参数
+
+（2）estimate-integral 应该给出一个 基于连续trails 的流
+
+（3）不需要给需要进行多少次试验，原因是estimate-integral 给出的是一个stream
+
+
+
