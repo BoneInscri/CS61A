@@ -3557,6 +3557,17 @@ $$
 \frac{d^{2}y}{dt^{2}}=f(\frac{dy}{dt},y)
 $$
 
+之前的信号流图：
+
+<img src="exercise-3.assets/image-20240312111325186.png" alt="image-20240312111325186" style="zoom: 67%;" />
+
+现在需要将 add 和 scale-stream 进行扩展，用f 来代替：
+
+需要用多参数的 stream-map 进行求值
+
+
+
+
 
 #### **Exercise 3.80.** 
 
