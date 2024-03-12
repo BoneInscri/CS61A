@@ -70,7 +70,7 @@
                                     (rand-update (request-reset-value request)))
                           )
              )
-            (else (error "Unknown request -- MAKE-ACCOUNT"
+            (else (error "Unknown request --Random-numbers"
                          request)))
       )
     )

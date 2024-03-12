@@ -18,7 +18,7 @@
     (define (dispatch m)
       (cond ((eq? m 'generate) (generate))
             ((eq? m 'reset) reset)
-            (else (error "Unknown request -- MAKE-ACCOUNT"
+            (else (error "Unknown request -- Rand"
                          m)))
       )
     dispatch

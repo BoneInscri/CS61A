@@ -3692,3 +3692,23 @@ Instead, it will produce a **stream of estimates based on successively more tria
 
 
 
+即 monte-carlo 传入的参数是一个 #t / #f 的流
+
+
+
+还有，需要注意，一定要用下面的过程创建 P-test-stream
+
+```
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+
+; random-in-range for stream
+(define (rand-range-stream low high) 
+  (cons-stream 
+   (random-in-range low high) 
+   (rand-range-stream low high))) 
+   
+   
+```
+
