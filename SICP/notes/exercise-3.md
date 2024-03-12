@@ -3511,6 +3511,33 @@ Write a procedure `solve-2nd` that takes as arguments the constants *a*, *b*, an
 
 
 
+参考一下 solve 的信号流图和代码的写法：
+
+<img src="exercise-3.assets/image-20240312104435125.png" alt="image-20240312104435125" style="zoom:50%;" />
+
+```lisp
+(define (solve f y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (stream-map f y))
+  y)
+```
+
+下面是 solve-2nd 的信号流图和代码写法：
+
+<img src="exercise-3.assets/image-20240312111325186.png" alt="image-20240312111325186" style="zoom: 67%;" />
+
+```lisp
+(define (solve-2nd a b dt y0 dy0)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (add-streams (scale-stream dy a) (scale-stream y b)))
+  y)
+```
+
+
+
+
+
 #### **Exercise 3.79.** 
 
 Generalize the `solve-2nd` procedure of exercise 3.78 so that it can be used to **solve general second-order differential equations $d^2y/dt^2=f(dy/dt,y)$.**
