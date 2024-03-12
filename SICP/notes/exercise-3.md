@@ -3565,6 +3565,14 @@ $$
 
 需要用多参数的 stream-map 进行求值
 
+```lisp
+(define (solve-2nd-general f dt y0 dy0)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-map f (scale-stream dy (/ 1.0 dt)) y))
+  y)
+```
+
 
 
 
@@ -3601,7 +3609,7 @@ Write a procedure RLC that takes as arguments the parameters $R, L, $and $C$ of 
 
 In a manner similar to that of the **RC** procedure of exercise 3.73, RLC should produce a procedure that takes the initial values of the static variables, $\nu_{C_0}$ and $i_{L_0}$, and produces a pair (using cons) of the streams of states $\nu_C$ and $i_L.$ 
 
-Using RLC, generate the pair of streams that models the behavior of **a series RLC circuit with $R= 1$ ohm, $C=0.2$ farad, $L=1$ henry, $dt=0.1$ second, and initial values $i_{L_0}=0$ amps and $\nu_{C_0}=10$ volts.**
+Using RLC, generate the **pair of streams** that models the behavior of **a series RLC circuit with $R= 1$ ohm, $C=0.2$ farad, $L=1$ henry, $dt=0.1$ second, and initial values $i_{L_0}=0$ amps and $\nu_{C_0}=10$ volts.**
 
 （1）实现 RLC 过程，参数是 R、L、C还有 dt
 
@@ -3616,4 +3624,31 @@ Using RLC, generate the pair of streams that models the behavior of **a series R
 - L：henry 亨利
 - I：amps 安培
 - V：volts 伏特
+
+
+
+明确信号流图：
+
+![image-20240312121751826](exercise-3.assets/image-20240312121751826.png)
+
+
+
+可供参考的RC电路信号流图和代码：
+
+<img src="exercise-3.assets/image-20240312115131484.png" alt="image-20240312115131484" style="zoom:67%;" />
+
+
+
+```lisp
+(define (RC R C dt)
+  (lambda (i v0)
+    (define rc
+      (add-streams (scale-stream i R)
+                   (integral (scale-stream i (/ 1 C)) v0 dt)
+                   )
+      )
+    rc
+    )
+  )
+```
 
